@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Node Sync Checker</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 2rem;
+      background-color: #f9f9f9;
+    }
+
+    .tabs {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .tab-buttons {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .tab-button {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 5px;
+      background-color: #ddd;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .tab-button.active {
+      background-color: #333;
+      color: white;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .form-card {
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 0.25rem;
+    }
+
+    input[type="text"], select, textarea {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
+    button {
+      margin-top: 1rem;
+      padding: 0.75rem 1.5rem;
+      background-color: #333;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+
+    th, td {
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    .healthy {
+      background-color: #e6ffe6; /* light green */
+    }
+
+    .degrading {
+      background-color: #fffdd0; /* light yellow */
+    }
+
+    .out-of-sync {
+      background-color: #ffe6e6; /* light red */
+    }
+
+    .offline {
+      background-color: #f2f2f2; /* gray */
+    }
+
+    .unknown {
+      background-color: #e0e0ff; /* soft blue */
+    }
+
+    #exportBtn {
+      float: right;
+      margin-bottom: 1rem;
+      background-color: #555;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="tabs">
+    <div class="tab-buttons">
+      <button class="tab-button active" onclick="switchTab('dashboard')">Dashboard</button>
+      <button class="tab-button" onclick="switchTab('addNode')">Add Node</button>
+    </div>
+    <button id="exportBtn">Export to CSV</button>
+  </div>
+
+  <div id="dashboard" class="tab-content active">
+    <table id="statusTable">
+      <thead>
+        <tr>
+          <th>Node Name</th>
+          <th>Status</th>
+          <th>Local Height</th>
+          <th>Remote Height</th>
+          <th>Delay</th>
+          <th>Last Checked</th>
+          <th>Error</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div id="addNode" class="tab-content">
+    <div class="form-card">
+      <form id="nodeForm">
+        <div class="form-group">
+          <label for="name">Node Name</label>
+          <input type="text" id="name" required />
+        </div>
+
+        <div class="form-group">
+          <label for="httpMethod">HTTP Method</label>
+          <select id="httpMethod">
+            <option value="POST" selected>POST</option>
+            <option value="GET">GET</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="local">Local URL</label>
+          <input type="text" id="local" required />
+        </div>
+
+        <div class="form-group">
+          <label for="remote">Remote URL</label>
+          <input type="text" id="remote" required />
+        </div>
+
+        <div class="form-group">
+          <label for="rpcMethod">RPC Method</label>
+          <input type="text" id="rpcMethod" placeholder="e.g. eth_blockNumber" />
+        </div>
+
+        <div class="form-group">
+          <label for="params">Params (JSON array)</label>
+          <input type="text" id="params" placeholder='e.g. ["latest"]' />
+        </div>
+
+        <div class="form-group">
+          <label for="headers">Headers (JSON)</label>
+          <input type="text" id="headers" placeholder='e.g. {"Authorization":"Bearer ..."}' />
+        </div>
+
+        <div class="form-group">
+          <label for="responsePath">Response Path</label>
+          <input type="text" id="responsePath" placeholder='e.g. result.header.height' />
+        </div>
+
+        <button type="submit">Add Node</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-button").forEach(btn => btn.classList.remove("active"));
+      document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
+      document.querySelector(`[onclick="switchTab('${tabId}')"]`).classList.add("active");
+      document.getElementById(tabId).classList.add("active");
+    }
+  </script>
+  <script src="frontend.js"></script>
+</body>
+</html>
