@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  sync-checker:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./nodes.json:/app/nodes.json
+      - ./status.json:/app/status.json
+      - ./public:/app/public
+    restart: unless-stopped
