@@ -238,6 +238,11 @@ npm install express node-fetch better-sqlite3
 npm run init-chains
 ```
 
+2(a). Initialize chains from backup:
+```bash
+cp sync_checker.db.example sync_checker.db
+```
+
 3. Start the development server:
 ```bash
 npm start

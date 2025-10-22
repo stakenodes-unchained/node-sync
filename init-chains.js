@@ -57,67 +57,9 @@ class ChainInitializer {
   }
 
   async addFallbackChains() {
-    const fallbackChains = [
-      {
-        name: 'Ethereum Mainnet',
-        symbol: 'ETH',
-        rpc_method: 'eth_blockNumber',
-        default_params: '[]',
-        response_path: 'result',
-        http_method: 'POST',
-        block_time: 15,
-        description: 'Ethereum Mainnet',
-        chain_id: 1,
-        rpc_urls: ['https://eth.llamarpc.com', 'https://ethereum-rpc.publicnode.com'],
-        explorer: 'https://etherscan.io',
-        is_testnet: false,
-        icon: 'ethereum',
-        short_name: 'eth'
-      },
-      {
-        name: 'Polygon Mainnet',
-        symbol: 'MATIC',
-        rpc_method: 'eth_blockNumber',
-        default_params: '[]',
-        response_path: 'result',
-        http_method: 'POST',
-        block_time: 2,
-        description: 'Polygon Mainnet',
-        chain_id: 137,
-        rpc_urls: ['https://polygon-rpc.com', 'https://rpc-mainnet.matic.network'],
-        explorer: 'https://polygonscan.com',
-        is_testnet: false,
-        icon: 'polygon',
-        short_name: 'matic'
-      },
-      {
-        name: 'Binance Smart Chain',
-        symbol: 'BNB',
-        rpc_method: 'eth_blockNumber',
-        default_params: '[]',
-        response_path: 'result',
-        http_method: 'POST',
-        block_time: 3,
-        description: 'Binance Smart Chain Mainnet',
-        chain_id: 56,
-        rpc_urls: ['https://bsc-dataseed.binance.org', 'https://bsc-dataseed1.defibit.io'],
-        explorer: 'https://bscscan.com',
-        is_testnet: false,
-        icon: 'bnb',
-        short_name: 'bsc'
-      }
-    ];
-
-    let addedCount = 0;
-    for (const chain of fallbackChains) {
-      try {
-        this.db.addChain(chain);
-        addedCount++;
-        console.log(`✅ Added fallback chain: ${chain.name}`);
-      } catch (error) {
-        console.log(`⏭️  Fallback chain ${chain.name} already exists or error occurred:`, error.message);
-      }
-    }
+    fs.copyFile('sync_checker.db.example', 'sync_checker.db', (err) => {
+      if (err) throw err;
+    });
     
     console.log(`✅ Added ${addedCount} fallback chains`);
   }
