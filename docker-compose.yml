@@ -6,7 +6,6 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./nodes.json:/app/nodes.json
-      - ./status.json:/app/status.json
+      - ./sync_checker.db:/app/sync_checker.db
       - ./public:/app/public
     restart: unless-stopped

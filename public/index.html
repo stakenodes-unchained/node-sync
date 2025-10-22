@@ -123,6 +123,525 @@
       margin-bottom: 1rem;
       background-color: #555;
     }
+
+    #chainsTable {
+      margin-top: 1rem;
+    }
+
+    #chainsTable th {
+      background-color: #f2f2f2;
+      font-weight: bold;
+    }
+
+    #chainsTable td {
+      padding: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .testnet {
+      background-color: #fff3cd;
+      color: #856404;
+      padding: 0.2rem 0.5rem;
+      border-radius: 3px;
+      font-size: 0.8rem;
+    }
+
+    .mainnet {
+      background-color: #d4edda;
+      color: #155724;
+      padding: 0.2rem 0.5rem;
+      border-radius: 3px;
+      font-size: 0.8rem;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-family: monospace;
+    }
+
+    .chain-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .chain-actions button {
+      padding: 0.3rem 0.6rem;
+      font-size: 0.8rem;
+      margin: 0;
+    }
+
+    /* Enhanced Chains UI */
+    .chains-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .chains-title h3 {
+      margin: 0 0 0.5rem 0;
+      color: #333;
+      font-size: 1.5rem;
+    }
+
+    .chains-title p {
+      margin: 0;
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    .chains-stats {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 0.5rem;
+      background: #f8f9fa;
+      border-radius: 8px;
+      min-width: 80px;
+    }
+
+    .stat-number {
+      display: block;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .stat-label {
+      display: block;
+      font-size: 0.8rem;
+      color: #666;
+      margin-top: 0.25rem;
+    }
+
+    .chains-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .search-box {
+      position: relative;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 0.75rem 2.5rem 0.75rem 1rem;
+      border: 2px solid #e0e0e0;
+      border-radius: 25px;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+
+    .search-box input:focus {
+      border-color: #007bff;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+    }
+
+    .clear-search {
+      position: absolute;
+      right: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #999;
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 50%;
+      transition: all 0.2s ease;
+    }
+
+    .clear-search:hover {
+      background: #f0f0f0;
+      color: #666;
+    }
+
+    .filter-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .filter-btn {
+      padding: 0.5rem 1rem;
+      border: 2px solid #e0e0e0;
+      background: white;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+
+    .filter-btn:hover {
+      border-color: #007bff;
+      color: #007bff;
+    }
+
+    .filter-btn.active {
+      background: #007bff;
+      border-color: #007bff;
+      color: white;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .btn-primary, .btn-secondary {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #007bff, #0056b3);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #0056b3, #004085);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    }
+
+    .btn-secondary {
+      background: #f8f9fa;
+      color: #666;
+      border: 2px solid #e0e0e0;
+    }
+
+    .btn-secondary:hover {
+      background: #e9ecef;
+      border-color: #d0d0d0;
+      transform: translateY(-1px);
+    }
+
+    .btn-icon {
+      font-size: 1rem;
+    }
+
+    .chains-container {
+      position: relative;
+      min-height: 200px;
+    }
+
+    .loading-spinner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem;
+      color: #666;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #007bff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 1rem;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .chains-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .chain-card {
+      background: white;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chain-card:hover {
+      border-color: #007bff;
+      transform: translateY(-4px);
+      box-shadow: 0 8px 25px rgba(0, 123, 255, 0.15);
+    }
+
+    .chain-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+
+    .chain-info h4 {
+      margin: 0 0 0.25rem 0;
+      color: #333;
+      font-size: 1.1rem;
+    }
+
+    .chain-symbol {
+      color: #666;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .chain-type-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .chain-details {
+      margin-bottom: 1.5rem;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .detail-label {
+      color: #666;
+    }
+
+    .detail-value {
+      color: #333;
+      font-weight: 500;
+    }
+
+    .chain-actions {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
+    }
+
+    .chain-actions button {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .edit-btn {
+      background: #28a745;
+      color: white;
+    }
+
+    .edit-btn:hover {
+      background: #218838;
+      transform: translateY(-1px);
+    }
+
+    .delete-btn {
+      background: #dc3545;
+      color: white;
+    }
+
+    .delete-btn:hover {
+      background: #c82333;
+      transform: translateY(-1px);
+    }
+
+    .no-chains {
+      text-align: center;
+      padding: 3rem;
+      color: #666;
+    }
+
+    .no-chains-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .no-chains h4 {
+      margin: 0 0 0.5rem 0;
+      color: #333;
+    }
+
+    /* Chain Form Modal */
+    .chain-form-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      z-index: 1000;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .form-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .form-header h3 {
+      margin: 0;
+      color: #333;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: #999;
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 50%;
+      transition: all 0.2s ease;
+    }
+
+    .close-btn:hover {
+      background: #f0f0f0;
+      color: #666;
+    }
+
+    .chain-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .checkbox-group {
+      margin: 0.5rem 0;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+      display: none;
+    }
+
+    .checkbox-custom {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #ddd;
+      border-radius: 4px;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+
+    .checkbox-label input[type="checkbox"]:checked + .checkbox-custom {
+      background: #007bff;
+      border-color: #007bff;
+    }
+
+    .checkbox-label input[type="checkbox"]:checked + .checkbox-custom::after {
+      content: '✓';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 2px solid #e0e0e0;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .chains-header {
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .chains-stats {
+        justify-content: center;
+      }
+
+      .chains-controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .search-box {
+        min-width: auto;
+      }
+
+      .filter-buttons {
+        justify-content: center;
+      }
+
+      .action-buttons {
+        justify-content: center;
+      }
+
+      .chains-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .chain-form-modal {
+        width: 95%;
+        margin: 1rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -131,6 +650,7 @@
     <div class="tab-buttons">
       <button class="tab-button active" onclick="switchTab('dashboard')">Dashboard</button>
       <button class="tab-button" onclick="switchTab('addNode')">Add Node</button>
+      <button class="tab-button" onclick="switchTab('chains')">Chains</button>
     </div>
     <button id="exportBtn">Export to CSV</button>
   </div>
@@ -140,6 +660,7 @@
       <thead>
         <tr>
           <th>Node Name</th>
+          <th>Chain</th>
           <th>Status</th>
           <th>Local Height</th>
           <th>Remote Height</th>
@@ -162,10 +683,9 @@
         </div>
 
         <div class="form-group">
-          <label for="httpMethod">HTTP Method</label>
-          <select id="httpMethod">
-            <option value="POST" selected>POST</option>
-            <option value="GET">GET</option>
+          <label for="chainSelect">Blockchain Network</label>
+          <select id="chainSelect" onchange="onChainSelect()" required>
+            <option value="">Select a chain...</option>
           </select>
         </div>
 
@@ -180,8 +700,16 @@
         </div>
 
         <div class="form-group">
-          <label for="rpcMethod">RPC Method</label>
-          <input type="text" id="rpcMethod" placeholder="e.g. eth_blockNumber" />
+          <label for="httpMethod">HTTP Method</label>
+          <select id="httpMethod">
+            <option value="POST" selected>POST</option>
+            <option value="GET">GET</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="rpcMethod">RPC Method (Custom)</label>
+          <input type="text" id="rpcMethod" placeholder="Leave empty to use chain default" />
         </div>
 
         <div class="form-group">
@@ -202,6 +730,159 @@
         <button type="submit">Add Node</button>
       </form>
     </div>
+  </div>
+
+  <div id="chains" class="tab-content">
+    <div class="form-card">
+      <div class="chains-header">
+        <div class="chains-title">
+          <h3>🔗 Blockchain Networks</h3>
+          <p>Manage blockchain network configurations and their default settings</p>
+        </div>
+        <div class="chains-stats" id="chainsStats">
+          <div class="stat-item">
+            <span class="stat-number" id="totalChains">0</span>
+            <span class="stat-label">Total Chains</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number" id="mainnetChains">0</span>
+            <span class="stat-label">Mainnets</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number" id="testnetChains">0</span>
+            <span class="stat-label">Testnets</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="chains-controls">
+        <div class="search-box">
+          <input type="text" id="chainSearch" placeholder="🔍 Search chains..." />
+          <button onclick="clearSearch()" class="clear-search">✕</button>
+        </div>
+        <div class="filter-buttons">
+          <button class="filter-btn active" onclick="filterChains('all')">All</button>
+          <button class="filter-btn" onclick="filterChains('mainnet')">Mainnet</button>
+          <button class="filter-btn" onclick="filterChains('testnet')">Testnet</button>
+        </div>
+        <div class="action-buttons">
+          <button onclick="refreshChains()" class="btn-secondary">
+            <span class="btn-icon">🔄</span>
+            <span class="btn-text">Refresh</span>
+          </button>
+          <button onclick="showAddChainForm()" class="btn-primary">
+            <span class="btn-icon">➕</span>
+            <span class="btn-text">Add Chain</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="chains-container">
+        <div class="loading-spinner" id="chainsLoading" style="display: none;">
+          <div class="spinner"></div>
+          <p>Loading chains...</p>
+        </div>
+        
+        <div class="chains-grid" id="chainsGrid">
+          <!-- Chains will be populated here -->
+        </div>
+        
+        <div class="no-chains" id="noChains" style="display: none;">
+          <div class="no-chains-icon">🔗</div>
+          <h4>No chains found</h4>
+          <p>Try adjusting your search or add a new chain</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Add/Edit Chain Form Modal -->
+  <div id="chainFormCard" class="form-card chain-form-modal" style="display: none;">
+    <div class="form-header">
+      <h3 id="chainFormTitle">Add Custom Chain</h3>
+      <button onclick="hideChainForm()" class="close-btn">✕</button>
+    </div>
+    
+    <form id="chainForm" class="chain-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="chainName">Chain Name</label>
+          <input type="text" id="chainName" required placeholder="e.g. Ethereum Mainnet" />
+        </div>
+        <div class="form-group">
+          <label for="chainSymbol">Symbol</label>
+          <input type="text" id="chainSymbol" required placeholder="e.g. ETH" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="chainId">Chain ID</label>
+          <input type="number" id="chainId" placeholder="e.g. 1" />
+        </div>
+        <div class="form-group">
+          <label for="chainBlockTime">Block Time (seconds)</label>
+          <input type="number" id="chainBlockTime" step="0.1" placeholder="15" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="chainRpcMethod">RPC Method</label>
+          <input type="text" id="chainRpcMethod" placeholder="e.g. eth_blockNumber" required />
+        </div>
+        <div class="form-group">
+          <label for="chainHttpMethod">HTTP Method</label>
+          <select id="chainHttpMethod">
+            <option value="POST" selected>POST</option>
+            <option value="GET">GET</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="chainDefaultParams">Default Params (JSON)</label>
+          <input type="text" id="chainDefaultParams" placeholder='e.g. []' />
+        </div>
+        <div class="form-group">
+          <label for="chainResponsePath">Response Path</label>
+          <input type="text" id="chainResponsePath" placeholder="e.g. result" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="chainDescription">Description</label>
+        <input type="text" id="chainDescription" placeholder="Brief description of the chain" />
+      </div>
+
+      <div class="form-group">
+        <label for="chainExplorer">Explorer URL</label>
+        <input type="url" id="chainExplorer" placeholder="https://etherscan.io" />
+      </div>
+
+      <div class="form-group">
+        <label for="chainRpcUrls">RPC URLs (one per line)</label>
+        <textarea id="chainRpcUrls" rows="3" placeholder="https://eth.llamarpc.com&#10;https://ethereum-rpc.publicnode.com"></textarea>
+      </div>
+
+      <div class="form-group checkbox-group">
+        <label class="checkbox-label">
+          <input type="checkbox" id="chainIsTestnet" />
+          <span class="checkbox-custom"></span>
+          This is a testnet
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" onclick="hideChainForm()" class="btn-secondary">Cancel</button>
+        <button type="submit" id="chainSubmitBtn" class="btn-primary">
+          <span class="btn-icon">➕</span>
+          <span class="btn-text">Add Chain</span>
+        </button>
+      </div>
+    </form>
   </div>
 
   <script>
