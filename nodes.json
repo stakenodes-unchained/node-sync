@@ -1,2 +1,12 @@
 [
+  {
+    "name": "Test Node",
+    "httpMethod": "POST",
+    "local": "https://explorer.pocket.network",
+    "remote": "https://shannon-grove-api.mainnet.poktroll.com/",
+    "method": "eth_blockNumber",
+    "params": [],
+    "headers": {},
+    "responsePath": "result"
+  }
 ]
