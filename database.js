@@ -256,6 +256,11 @@ class DatabaseManager {
   }
 
   deleteNode(id) {
+    // First delete all status history records for this node
+    const deleteHistoryStmt = this.db.prepare('DELETE FROM node_status_history WHERE node_id = ?');
+    deleteHistoryStmt.run(id);
+    
+    // Then delete the node
     const stmt = this.db.prepare('DELETE FROM nodes WHERE id = ?');
     return stmt.run(id);
   }

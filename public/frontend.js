@@ -24,20 +24,55 @@ async function fetchStatus() {
         ? "offline"
         : "unknown";
 
-    row.innerHTML = `
-      <td>${node.name}</td>
-      <td>${node.chain_name || 'Unknown'} (${node.chain_symbol || '?'})</td>
-      <td>${node.status}</td>
-      <td>${node.localHeight ?? "—"}</td>
-      <td>${node.remoteHeight ?? "—"}</td>
-      <td>${node.delay ?? "—"}</td>
-      <td>${new Date(node.lastChecked).toLocaleString()}</td>
-      <td>${node.error ?? ""}</td>
-      <td>
-        <button onclick="editNode(${node.id})">✏️ Edit</button>
-        <button onclick="deleteNode(${node.id})">🗑 Delete</button>
-      </td>
-    `;
+    // Create table cells
+    const nameCell = document.createElement("td");
+    nameCell.textContent = node.name;
+    
+    const chainCell = document.createElement("td");
+    chainCell.textContent = `${node.chain_name || 'Unknown'} (${node.chain_symbol || '?'})`;
+    
+    const statusCell = document.createElement("td");
+    statusCell.textContent = node.status;
+    
+    const localHeightCell = document.createElement("td");
+    localHeightCell.textContent = node.localHeight ?? "—";
+    
+    const remoteHeightCell = document.createElement("td");
+    remoteHeightCell.textContent = node.remoteHeight ?? "—";
+    
+    const delayCell = document.createElement("td");
+    delayCell.textContent = node.delay ?? "—";
+    
+    const lastCheckedCell = document.createElement("td");
+    lastCheckedCell.textContent = new Date(node.lastChecked).toLocaleString();
+    
+    const errorCell = document.createElement("td");
+    errorCell.textContent = node.error ?? "";
+    
+    // Create action buttons
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "✏️ Edit";
+    editBtn.onclick = () => editNode(node.id);
+    editBtn.style.marginRight = "0.5rem";
+    
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "🗑 Delete";
+    deleteBtn.onclick = () => deleteNode(node.id);
+    
+    const actionsCell = document.createElement("td");
+    actionsCell.appendChild(editBtn);
+    actionsCell.appendChild(deleteBtn);
+    
+    // Append all cells to row
+    row.appendChild(nameCell);
+    row.appendChild(chainCell);
+    row.appendChild(statusCell);
+    row.appendChild(localHeightCell);
+    row.appendChild(remoteHeightCell);
+    row.appendChild(delayCell);
+    row.appendChild(lastCheckedCell);
+    row.appendChild(errorCell);
+    row.appendChild(actionsCell);
 
     tbody.appendChild(row);
   });
@@ -180,6 +215,9 @@ async function deleteNode(id) {
   }
 }
 
+async function cancelEditNode() {
+  window.location.reload();
+}
 // ✏️ Edit node (populate form for update)
 async function editNode(id) {
   try {
@@ -192,6 +230,10 @@ async function editNode(id) {
 
     currentNodeId = id;
 
+    document.getElementById("nodeSubmitBtn").innerHTML = "Update Node";
+    document.getElementById("addNodeBtn").innerHTML = "Editing Node";
+    document.getElementById("nodeCancelBtn").style.display = "block";
+    document.getElementById("nodeCancelBtn").onclick = () => cancelEditNode();
     // Ensure chains are loaded before populating the form
     if (availableChains.length === 0) {
       await fetchChains();

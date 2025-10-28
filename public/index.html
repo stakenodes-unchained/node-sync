@@ -649,7 +649,7 @@
   <div class="tabs">
     <div class="tab-buttons">
       <button class="tab-button active" onclick="switchTab('dashboard')">Dashboard</button>
-      <button class="tab-button" onclick="switchTab('addNode')">Add Node</button>
+      <button class="tab-button" id="addNodeBtn" onclick="switchTab('addNode')">Add Node</button>
       <button class="tab-button" onclick="switchTab('chains')">Chains</button>
     </div>
     <button id="exportBtn">Export to CSV</button>
@@ -727,7 +727,8 @@
           <input type="text" id="responsePath" placeholder='e.g. result.header.height' />
         </div>
 
-        <button type="submit">Add Node</button>
+        <button id="nodeSubmitBtn" type="submit">Add Node</button>
+        <button id="nodeCancelBtn" type="button">Cancel</button>
       </form>
     </div>
   </div>
