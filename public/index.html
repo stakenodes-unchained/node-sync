@@ -895,5 +895,69 @@
     }
   </script>
   <script src="frontend.js"></script>
+
+  <!-- Edit Node Modal -->
+  <div id="editNodeModal" class="form-card chain-form-modal" style="display: none;">
+    <div class="form-header">
+      <h3 id="editNodeTitle">Edit Node</h3>
+      <button onclick="hideEditNodeModal()" class="close-btn">✕</button>
+    </div>
+    <form id="editNodeForm" class="chain-form">
+      <div class="form-group">
+        <label for="editName">Node Name</label>
+        <input type="text" id="editName" required />
+      </div>
+
+      <div class="form-group">
+        <label for="editChainSelect">Blockchain Network</label>
+        <select id="editChainSelect" required onchange="onEditChainSelect()">
+          <option value="">Select a chain...</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="editLocal">Local URL</label>
+        <input type="text" id="editLocal" required />
+      </div>
+
+      <div class="form-group">
+        <label for="editRemote">Remote URL</label>
+        <input type="text" id="editRemote" required />
+      </div>
+
+      <div class="form-group">
+        <label for="editHttpMethod">HTTP Method</label>
+        <select id="editHttpMethod">
+          <option value="POST">POST</option>
+          <option value="GET">GET</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="editRpcMethod">RPC Method (Custom)</label>
+        <input type="text" id="editRpcMethod" placeholder="Leave empty to use chain default" />
+      </div>
+
+      <div class="form-group">
+        <label for="editParams">Params (JSON array)</label>
+        <input type="text" id="editParams" placeholder='e.g. ["latest"]' />
+      </div>
+
+      <div class="form-group">
+        <label for="editHeaders">Headers (JSON)</label>
+        <input type="text" id="editHeaders" placeholder='e.g. {"Authorization":"Bearer ..."}' />
+      </div>
+
+      <div class="form-group">
+        <label for="editResponsePath">Response Path</label>
+        <input type="text" id="editResponsePath" placeholder='e.g. result.header.height' />
+      </div>
+
+      <div class="form-actions">
+        <button type="button" onclick="hideEditNodeModal()" class="btn-secondary">Cancel</button>
+        <button type="submit" id="editNodeSubmitBtn" class="btn-primary"><span class="btn-text">Update Node</span></button>
+      </div>
+    </form>
+  </div>
 </body>
 </html>

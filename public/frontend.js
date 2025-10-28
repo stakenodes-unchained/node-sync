@@ -85,6 +85,7 @@ let currentChainId = null;
 let filteredChains = [];
 let currentFilter = 'all';
 let searchQuery = '';
+let editingNodeId = null;
 
 // 📡 Fetch available chains
 async function fetchChains() {
@@ -97,6 +98,10 @@ async function fetchChains() {
     availableChains = await res.json();
     console.log('Chains fetched:', availableChains.length, 'chains');
     populateChainDropdown();
+    // Also keep edit modal dropdown in sync if present
+    if (typeof populateEditChainDropdown === 'function') {
+      populateEditChainDropdown();
+    }
     displayChains(); // Also display chains in the chains tab
   } catch (error) {
     console.error("Failed to fetch chains:", error);
@@ -215,63 +220,84 @@ async function deleteNode(id) {
   }
 }
 
-async function cancelEditNode() {
-  window.location.reload();
-}
-// ✏️ Edit node (populate form for update)
+// ✏️ Edit node (open and populate modal)
 async function editNode(id) {
   try {
-    // Fetch the specific node data for editing
     const res = await fetch(`/nodes/${id}`);
     if (!res.ok) {
       return alert("❌ Failed to fetch node data.");
     }
     const node = await res.json();
 
-    currentNodeId = id;
+    // Set editing id
+    editingNodeId = id;
 
-    document.getElementById("nodeSubmitBtn").innerHTML = "Update Node";
-    document.getElementById("addNodeBtn").innerHTML = "Editing Node";
-    document.getElementById("nodeCancelBtn").style.display = "block";
-    document.getElementById("nodeCancelBtn").onclick = () => cancelEditNode();
-    // Ensure chains are loaded before populating the form
+    // Ensure chains are loaded
     if (availableChains.length === 0) {
       await fetchChains();
     }
 
-    // Populate form
-    document.getElementById("name").value = node.name;
-    document.getElementById("chainSelect").value = node.chain_id;
-    
-    // Trigger chain selection to populate defaults
-    onChainSelect();
-    
-    // Override with custom values if they exist
-    document.getElementById("local").value = node.local_url || "";
-    document.getElementById("remote").value = node.remote_url || "";
-    
-    if (node.custom_method) {
-      document.getElementById("rpcMethod").value = node.custom_method;
-    }
-    if (node.custom_params) {
-      document.getElementById("params").value = node.custom_params;
-    }
-    if (node.custom_headers) {
-      document.getElementById("headers").value = node.custom_headers;
-    }
-    if (node.custom_response_path) {
-      document.getElementById("responsePath").value = node.custom_response_path;
-    }
-    if (node.custom_http_method) {
-      document.getElementById("httpMethod").value = node.custom_http_method;
-    }
+    // Populate edit modal dropdown and fields
+    populateEditChainDropdown();
+    document.getElementById("editName").value = node.name || '';
+    document.getElementById("editChainSelect").value = node.chain_id || '';
+    onEditChainSelect();
+    document.getElementById("editLocal").value = node.local_url || '';
+    document.getElementById("editRemote").value = node.remote_url || '';
+    document.getElementById("editRpcMethod").value = node.custom_method || '';
+    document.getElementById("editParams").value = node.custom_params || '[]';
+    document.getElementById("editHeaders").value = node.custom_headers || '{}';
+    document.getElementById("editResponsePath").value = node.custom_response_path || 'result';
+    document.getElementById("editHttpMethod").value = node.custom_http_method || 'POST';
 
-    // Switch to Add Node tab
-    switchTab("addNode");
-    alert("📝 Edit the fields and resubmit to update.");
+    showEditNodeModal();
   } catch (error) {
     alert("❌ Failed to load node data: " + error.message);
   }
+}
+
+// ===== Edit Node Modal helpers =====
+function showEditNodeModal() {
+  const modal = document.getElementById('editNodeModal');
+  if (modal) modal.style.display = 'block';
+}
+
+function hideEditNodeModal() {
+  const modal = document.getElementById('editNodeModal');
+  if (modal) modal.style.display = 'none';
+  editingNodeId = null;
+}
+
+function populateEditChainDropdown() {
+  const select = document.getElementById('editChainSelect');
+  if (!select) return;
+  select.innerHTML = '<option value="">Select a chain...</option>';
+  availableChains.forEach(chain => {
+    const option = document.createElement('option');
+    option.value = chain.id;
+    option.textContent = `${chain.name} (${chain.symbol})`;
+    option.dataset.chain = JSON.stringify(chain);
+    select.appendChild(option);
+  });
+}
+
+function onEditChainSelect() {
+  const select = document.getElementById('editChainSelect');
+  if (!select) return;
+  const selected = select.options[select.selectedIndex];
+  if (!selected || !selected.value) return;
+  const chain = JSON.parse(selected.dataset.chain);
+  // Fill defaults only if empty
+  const methodEl = document.getElementById('editRpcMethod');
+  const paramsEl = document.getElementById('editParams');
+  const respPathEl = document.getElementById('editResponsePath');
+  const httpMethodEl = document.getElementById('editHttpMethod');
+  const remoteEl = document.getElementById('editRemote');
+  if (methodEl && !methodEl.value) methodEl.value = chain.rpc_method || '';
+  if (paramsEl && (!paramsEl.value || paramsEl.value === '[]')) paramsEl.value = chain.default_params || '[]';
+  if (respPathEl && (!respPathEl.value || respPathEl.value === 'result')) respPathEl.value = chain.response_path || 'result';
+  if (httpMethodEl && !httpMethodEl.value) httpMethodEl.value = chain.http_method || 'POST';
+  if (remoteEl && !remoteEl.value && chain.rpc_urls && chain.rpc_urls.length) remoteEl.value = chain.rpc_urls[0];
 }
 
 // ⬇️ Export table to CSV
@@ -689,4 +715,39 @@ document.addEventListener("DOMContentLoaded", () => {
   fetchChains();                          // Load available chains
   fetchStatus();                          // Initial status load
   setInterval(fetchStatus, 60 * 1000);   // Auto-refresh every 60 seconds
+
+  // Attach submit handler for Edit Node modal after DOM is ready
+  const editForm = document.getElementById('editNodeForm');
+  if (editForm) {
+    editForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!editingNodeId) return;
+
+      const node = {
+        name: document.getElementById('editName').value.trim(),
+        chain_id: parseInt(document.getElementById('editChainSelect').value),
+        local_url: document.getElementById('editLocal').value.trim(),
+        remote_url: document.getElementById('editRemote').value.trim(),
+        custom_method: document.getElementById('editRpcMethod').value.trim() || null,
+        custom_params: document.getElementById('editParams').value.trim() || '[]',
+        custom_headers: document.getElementById('editHeaders').value.trim() || '{}',
+        custom_response_path: document.getElementById('editResponsePath').value.trim() || null,
+        custom_http_method: document.getElementById('editHttpMethod').value || null,
+      };
+
+      const res = await fetch(`/edit/${editingNodeId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(node),
+      });
+
+      if (res.ok) {
+        hideEditNodeModal();
+        await fetchStatus();
+      } else {
+        const err = await res.json().catch(() => ({ error: 'Unknown error' }));
+        alert('❌ Failed to update node: ' + (err.error || 'Unknown error'));
+      }
+    });
+  }
 });

@@ -12,6 +12,36 @@ const db = new DatabaseManager();
 app.use(express.static("public"));
 app.use(express.json());
 
+// Simple request logger for all API requests
+app.use((req, res, next) => {
+	const start = Date.now();
+	const { method, originalUrl } = req;
+
+	// Capture body safely (only for JSON and non-GET)
+	let bodyPreview = '';
+	if (method !== 'GET' && req.is('application/json')) {
+		try {
+			const raw = JSON.stringify(req.body);
+			// Truncate to avoid huge logs
+			bodyPreview = raw.length > 500 ? raw.slice(0, 500) + '…' : raw;
+		} catch (_) {
+			bodyPreview = '[unserializable body]';
+		}
+	}
+
+	res.on('finish', () => {
+		const ms = Date.now() - start;
+		const status = res.statusCode;
+		if (bodyPreview) {
+			console.log(`${method} ${originalUrl} ${status} - ${ms}ms body=${bodyPreview}`);
+		} else {
+			console.log(`${method} ${originalUrl} ${status} - ${ms}ms`);
+		}
+	});
+
+	next();
+});
+
 // GET /
 app.get("/", (_req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
@@ -66,8 +96,6 @@ app.get("/status", async (_req, res) => {
             });
           }
 
-          console.log({options});
-
           const response = await fetch(url, options);
           const contentType = response.headers.get("content-type") || "";
           const text = await response.text();
@@ -77,7 +105,6 @@ app.get("/status", async (_req, res) => {
           }
 
           const data = JSON.parse(text);
-          console.log({data});
           const value = responsePath.split(".").reduce((o, k) => o?.[k], data);
           return parseInt(value, 16);
         } catch (err) {
