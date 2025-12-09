@@ -4,7 +4,9 @@ async function fetchStatus() {
   let data = await res.json();
 
   // 🔤 Sort by name alphabetically (case-insensitive)
-  data.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
+  data.sort((a, b) =>
+    a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+  );
 
   const tbody = document.querySelector("#statusTable tbody");
   tbody.innerHTML = "";
@@ -27,42 +29,46 @@ async function fetchStatus() {
     // Create table cells
     const nameCell = document.createElement("td");
     nameCell.textContent = node.name;
-    
+
     const chainCell = document.createElement("td");
-    chainCell.textContent = `${node.chain_name || 'Unknown'} (${node.chain_symbol || '?'})`;
-    
+    chainCell.textContent = `${node.chain_name || "Unknown"} (${
+      node.chain_symbol || "?"
+    })`;
+
     const statusCell = document.createElement("td");
     statusCell.textContent = node.status;
-    
+
     const localHeightCell = document.createElement("td");
     localHeightCell.textContent = node.localHeight ?? "—";
-    
+
     const remoteHeightCell = document.createElement("td");
     remoteHeightCell.textContent = node.remoteHeight ?? "—";
-    
+
     const delayCell = document.createElement("td");
     delayCell.textContent = node.delay ?? "—";
-    
+
     const lastCheckedCell = document.createElement("td");
     lastCheckedCell.textContent = new Date(node.lastChecked).toLocaleString();
-    
+
     const errorCell = document.createElement("td");
     errorCell.textContent = node.error ?? "";
-    
+
     // Create action buttons
     const editBtn = document.createElement("button");
     editBtn.textContent = "✏️ Edit";
+    editBtn.className = "edit-button";
     editBtn.onclick = () => editNode(node.id);
     editBtn.style.marginRight = "0.5rem";
-    
+
     const deleteBtn = document.createElement("button");
     deleteBtn.textContent = "🗑 Delete";
+    deleteBtn.className = "delete-button";
     deleteBtn.onclick = () => deleteNode(node.id);
-    
+
     const actionsCell = document.createElement("td");
     actionsCell.appendChild(editBtn);
     actionsCell.appendChild(deleteBtn);
-    
+
     // Append all cells to row
     row.appendChild(nameCell);
     row.appendChild(chainCell);
@@ -83,23 +89,23 @@ let availableChains = [];
 let currentNodeId = null;
 let currentChainId = null;
 let filteredChains = [];
-let currentFilter = 'all';
-let searchQuery = '';
+let currentFilter = "all";
+let searchQuery = "";
 let editingNodeId = null;
 
 // 📡 Fetch available chains
 async function fetchChains() {
   try {
-    console.log('Fetching chains...');
+    console.log("Fetching chains...");
     const res = await fetch("/chains");
     if (!res.ok) {
       throw new Error(`HTTP ${res.status}: ${res.statusText}`);
     }
     availableChains = await res.json();
-    console.log('Chains fetched:', availableChains.length, 'chains');
+    console.log("Chains fetched:", availableChains.length, "chains");
     populateChainDropdown();
     // Also keep edit modal dropdown in sync if present
-    if (typeof populateEditChainDropdown === 'function') {
+    if (typeof populateEditChainDropdown === "function") {
       populateEditChainDropdown();
     }
     displayChains(); // Also display chains in the chains tab
@@ -115,8 +121,8 @@ function populateChainDropdown() {
   if (!chainSelect) return;
 
   chainSelect.innerHTML = '<option value="">Select a chain...</option>';
-  
-  availableChains.forEach(chain => {
+
+  availableChains.forEach((chain) => {
     const option = document.createElement("option");
     option.value = chain.id;
     option.textContent = `${chain.name} (${chain.symbol})`;
@@ -129,7 +135,7 @@ function populateChainDropdown() {
 function onChainSelect() {
   const chainSelect = document.getElementById("chainSelect");
   if (!chainSelect) return;
-  
+
   const selectedOption = chainSelect.options[chainSelect.selectedIndex];
   if (!selectedOption || !selectedOption.value) {
     clearChainDefaults();
@@ -144,9 +150,10 @@ function onChainSelect() {
 function populateChainDefaults(chain) {
   document.getElementById("rpcMethod").value = chain.rpc_method || "";
   document.getElementById("params").value = chain.default_params || "[]";
-  document.getElementById("responsePath").value = chain.response_path || "result";
+  document.getElementById("responsePath").value =
+    chain.response_path || "result";
   document.getElementById("httpMethod").value = chain.http_method || "POST";
-  
+
   // Pre-fill remote URL with first available RPC
   if (chain.rpc_urls && chain.rpc_urls.length > 0) {
     document.getElementById("remote").value = chain.rpc_urls[0];
@@ -180,7 +187,8 @@ document.getElementById("nodeForm")?.addEventListener("submit", async (e) => {
     custom_method: document.getElementById("rpcMethod").value.trim() || null,
     custom_params: document.getElementById("params").value.trim() || "[]",
     custom_headers: document.getElementById("headers").value.trim() || "{}",
-    custom_response_path: document.getElementById("responsePath").value.trim() || null,
+    custom_response_path:
+      document.getElementById("responsePath").value.trim() || null,
     custom_http_method: document.getElementById("httpMethod").value || null,
   };
 
@@ -239,16 +247,18 @@ async function editNode(id) {
 
     // Populate edit modal dropdown and fields
     populateEditChainDropdown();
-    document.getElementById("editName").value = node.name || '';
-    document.getElementById("editChainSelect").value = node.chain_id || '';
+    document.getElementById("editName").value = node.name || "";
+    document.getElementById("editChainSelect").value = node.chain_id || "";
     onEditChainSelect();
-    document.getElementById("editLocal").value = node.local_url || '';
-    document.getElementById("editRemote").value = node.remote_url || '';
-    document.getElementById("editRpcMethod").value = node.custom_method || '';
-    document.getElementById("editParams").value = node.custom_params || '[]';
-    document.getElementById("editHeaders").value = node.custom_headers || '{}';
-    document.getElementById("editResponsePath").value = node.custom_response_path || 'result';
-    document.getElementById("editHttpMethod").value = node.custom_http_method || 'POST';
+    document.getElementById("editLocal").value = node.local_url || "";
+    document.getElementById("editRemote").value = node.remote_url || "";
+    document.getElementById("editRpcMethod").value = node.custom_method || "";
+    document.getElementById("editParams").value = node.custom_params || "[]";
+    document.getElementById("editHeaders").value = node.custom_headers || "{}";
+    document.getElementById("editResponsePath").value =
+      node.custom_response_path || "result";
+    document.getElementById("editHttpMethod").value =
+      node.custom_http_method || "POST";
 
     showEditNodeModal();
   } catch (error) {
@@ -258,22 +268,22 @@ async function editNode(id) {
 
 // ===== Edit Node Modal helpers =====
 function showEditNodeModal() {
-  const modal = document.getElementById('editNodeModal');
-  if (modal) modal.style.display = 'block';
+  const modal = document.getElementById("editNodeModal");
+  if (modal) modal.style.display = "block";
 }
 
 function hideEditNodeModal() {
-  const modal = document.getElementById('editNodeModal');
-  if (modal) modal.style.display = 'none';
+  const modal = document.getElementById("editNodeModal");
+  if (modal) modal.style.display = "none";
   editingNodeId = null;
 }
 
 function populateEditChainDropdown() {
-  const select = document.getElementById('editChainSelect');
+  const select = document.getElementById("editChainSelect");
   if (!select) return;
   select.innerHTML = '<option value="">Select a chain...</option>';
-  availableChains.forEach(chain => {
-    const option = document.createElement('option');
+  availableChains.forEach((chain) => {
+    const option = document.createElement("option");
     option.value = chain.id;
     option.textContent = `${chain.name} (${chain.symbol})`;
     option.dataset.chain = JSON.stringify(chain);
@@ -282,22 +292,26 @@ function populateEditChainDropdown() {
 }
 
 function onEditChainSelect() {
-  const select = document.getElementById('editChainSelect');
+  const select = document.getElementById("editChainSelect");
   if (!select) return;
   const selected = select.options[select.selectedIndex];
   if (!selected || !selected.value) return;
   const chain = JSON.parse(selected.dataset.chain);
   // Fill defaults only if empty
-  const methodEl = document.getElementById('editRpcMethod');
-  const paramsEl = document.getElementById('editParams');
-  const respPathEl = document.getElementById('editResponsePath');
-  const httpMethodEl = document.getElementById('editHttpMethod');
-  const remoteEl = document.getElementById('editRemote');
-  if (methodEl && !methodEl.value) methodEl.value = chain.rpc_method || '';
-  if (paramsEl && (!paramsEl.value || paramsEl.value === '[]')) paramsEl.value = chain.default_params || '[]';
-  if (respPathEl && (!respPathEl.value || respPathEl.value === 'result')) respPathEl.value = chain.response_path || 'result';
-  if (httpMethodEl && !httpMethodEl.value) httpMethodEl.value = chain.http_method || 'POST';
-  if (remoteEl && !remoteEl.value && chain.rpc_urls && chain.rpc_urls.length) remoteEl.value = chain.rpc_urls[0];
+  const methodEl = document.getElementById("editRpcMethod");
+  const paramsEl = document.getElementById("editParams");
+  const respPathEl = document.getElementById("editResponsePath");
+  const httpMethodEl = document.getElementById("editHttpMethod");
+  const remoteEl = document.getElementById("editRemote");
+  if (methodEl && !methodEl.value) methodEl.value = chain.rpc_method || "";
+  if (paramsEl && (!paramsEl.value || paramsEl.value === "[]"))
+    paramsEl.value = chain.default_params || "[]";
+  if (respPathEl && (!respPathEl.value || respPathEl.value === "result"))
+    respPathEl.value = chain.response_path || "result";
+  if (httpMethodEl && !httpMethodEl.value)
+    httpMethodEl.value = chain.http_method || "POST";
+  if (remoteEl && !remoteEl.value && chain.rpc_urls && chain.rpc_urls.length)
+    remoteEl.value = chain.rpc_urls[0];
 }
 
 // ⬇️ Export table to CSV
@@ -334,15 +348,21 @@ function displayChains() {
       </div>
       <div class="chains-stats">
         <div class="stat-item">
-          <span class="stat-number" id="totalChains">${availableChains.length}</span>
+          <span class="stat-number" id="totalChains">${
+            availableChains.length
+          }</span>
           <span class="stat-label">Total</span>
         </div>
         <div class="stat-item">
-          <span class="stat-number" id="mainnetChains">${availableChains.filter(c => !c.is_testnet).length}</span>
+          <span class="stat-number" id="mainnetChains">${
+            availableChains.filter((c) => !c.is_testnet).length
+          }</span>
           <span class="stat-label">Mainnet</span>
         </div>
         <div class="stat-item">
-          <span class="stat-number" id="testnetChains">${availableChains.filter(c => c.is_testnet).length}</span>
+          <span class="stat-number" id="testnetChains">${
+            availableChains.filter((c) => c.is_testnet).length
+          }</span>
           <span class="stat-label">Testnet</span>
         </div>
       </div>
@@ -383,17 +403,20 @@ function displayChains() {
 
 // 🔍 Filter chains based on search and filter
 function applyFilters() {
-  filteredChains = availableChains.filter(chain => {
+  filteredChains = availableChains.filter((chain) => {
     // Search filter
-    const matchesSearch = !searchQuery || 
+    const matchesSearch =
+      !searchQuery ||
       chain.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       chain.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (chain.description && chain.description.toLowerCase().includes(searchQuery.toLowerCase()));
+      (chain.description &&
+        chain.description.toLowerCase().includes(searchQuery.toLowerCase()));
 
     // Type filter
-    const matchesFilter = currentFilter === 'all' ||
-      (currentFilter === 'mainnet' && !chain.is_testnet) ||
-      (currentFilter === 'testnet' && chain.is_testnet);
+    const matchesFilter =
+      currentFilter === "all" ||
+      (currentFilter === "mainnet" && !chain.is_testnet) ||
+      (currentFilter === "testnet" && chain.is_testnet);
 
     return matchesSearch && matchesFilter;
   });
@@ -417,22 +440,26 @@ function renderChainCards() {
     return;
   }
 
-  grid.innerHTML = filteredChains.map(chain => `
+  grid.innerHTML = filteredChains
+    .map(
+      (chain) => `
     <div class="chain-card">
       <div class="chain-card-header">
         <div class="chain-info">
           <h4>${chain.name}</h4>
           <div class="chain-symbol">${chain.symbol}</div>
         </div>
-        <div class="chain-type-badge ${chain.is_testnet ? 'testnet' : 'mainnet'}">
-          ${chain.is_testnet ? 'Testnet' : 'Mainnet'}
+        <div class="chain-type-badge ${
+          chain.is_testnet ? "testnet" : "mainnet"
+        }">
+          ${chain.is_testnet ? "Testnet" : "Mainnet"}
         </div>
       </div>
       
       <div class="chain-details">
         <div class="detail-row">
           <span class="detail-label">Chain ID:</span>
-          <span class="detail-value">${chain.chain_id || '—'}</span>
+          <span class="detail-value">${chain.chain_id || "—"}</span>
         </div>
         <div class="detail-row">
           <span class="detail-label">RPC Method:</span>
@@ -444,14 +471,22 @@ function renderChainCards() {
         </div>
         <div class="detail-row">
           <span class="detail-label">RPC URLs:</span>
-          <span class="detail-value">${chain.rpc_urls ? chain.rpc_urls.length : 0}</span>
+          <span class="detail-value">${
+            chain.rpc_urls ? chain.rpc_urls.length : 0
+          }</span>
         </div>
-        ${chain.description ? `
+        ${
+          chain.description
+            ? `
         <div class="detail-row">
           <span class="detail-label">Description:</span>
-          <span class="detail-value">${chain.description.substring(0, 50)}${chain.description.length > 50 ? '...' : ''}</span>
+          <span class="detail-value">${chain.description.substring(0, 50)}${
+                chain.description.length > 50 ? "..." : ""
+              }</span>
         </div>
-        ` : ''}
+        `
+            : ""
+        }
       </div>
       
       <div class="chain-actions">
@@ -463,21 +498,23 @@ function renderChainCards() {
         </button>
       </div>
     </div>
-  `).join('');
+  `
+    )
+    .join("");
 }
 
 // 🔍 Handle search input
 function filterChains() {
   const searchInput = document.getElementById("chainSearch");
   if (!searchInput) return;
-  
+
   searchQuery = searchInput.value.trim();
   const clearBtn = document.querySelector(".clear-search");
-  
+
   if (clearBtn) {
     clearBtn.style.display = searchQuery ? "block" : "none";
   }
-  
+
   applyFilters();
 }
 
@@ -495,17 +532,19 @@ function clearSearch() {
 // 🏷️ Set filter type
 function setFilter(type) {
   currentFilter = type;
-  
+
   // Update filter buttons
-  document.querySelectorAll(".filter-btn").forEach(btn => {
+  document.querySelectorAll(".filter-btn").forEach((btn) => {
     btn.classList.remove("active");
   });
-  
-  const activeBtn = document.querySelector(`.filter-btn[onclick="setFilter('${type}')"]`);
+
+  const activeBtn = document.querySelector(
+    `.filter-btn[onclick="setFilter('${type}')"]`
+  );
   if (activeBtn) {
     activeBtn.classList.add("active");
   }
-  
+
   applyFilters();
 }
 
@@ -515,7 +554,7 @@ async function refreshChains() {
   if (loadingSpinner) {
     loadingSpinner.style.display = "flex";
   }
-  
+
   try {
     await fetchChains();
     displayChains();
@@ -529,19 +568,19 @@ async function refreshChains() {
 // ➕ Show add chain form
 function showAddChainForm() {
   currentChainId = null;
-  
+
   // Check if form elements exist before trying to modify them
   const formTitle = document.getElementById("chainFormTitle");
   const submitBtn = document.getElementById("chainSubmitBtn");
   const formCard = document.getElementById("chainFormCard");
   const form = document.getElementById("chainForm");
-  
+
   if (!formTitle || !submitBtn || !formCard || !form) {
-    console.error('Chain form elements not found');
-    alert('❌ Chain form not properly initialized');
+    console.error("Chain form elements not found");
+    alert("❌ Chain form not properly initialized");
     return;
   }
-  
+
   formTitle.textContent = "Add Custom Chain";
   submitBtn.textContent = "Add Chain";
   form.reset();
@@ -550,30 +589,30 @@ function showAddChainForm() {
 
 // ✏️ Edit chain
 function editChain(id) {
-  const chain = availableChains.find(c => c.id === id);
+  const chain = availableChains.find((c) => c.id === id);
   if (!chain) {
-    console.error('Chain not found:', id);
-    alert('❌ Chain not found');
+    console.error("Chain not found:", id);
+    alert("❌ Chain not found");
     return;
   }
 
-  console.log('Editing chain:', chain); // Debug log
+  console.log("Editing chain:", chain); // Debug log
 
   currentChainId = id;
-  
+
   // Check if form elements exist before trying to modify them
   const formTitle = document.getElementById("chainFormTitle");
   const submitBtn = document.getElementById("chainSubmitBtn");
-  
+
   if (!formTitle || !submitBtn) {
-    console.error('Chain form elements not found');
-    alert('❌ Chain form not properly initialized');
+    console.error("Chain form elements not found");
+    alert("❌ Chain form not properly initialized");
     return;
   }
-  
+
   formTitle.textContent = "Edit Chain";
   submitBtn.textContent = "Update Chain";
-  
+
   // Populate form with error handling
   try {
     const formElements = {
@@ -588,36 +627,39 @@ function editChain(id) {
       chainDescription: document.getElementById("chainDescription"),
       chainExplorer: document.getElementById("chainExplorer"),
       chainRpcUrls: document.getElementById("chainRpcUrls"),
-      chainIsTestnet: document.getElementById("chainIsTestnet")
+      chainIsTestnet: document.getElementById("chainIsTestnet"),
     };
-    
+
     // Check if all required form elements exist
     const missingElements = Object.entries(formElements)
       .filter(([name, element]) => !element)
       .map(([name]) => name);
-    
+
     if (missingElements.length > 0) {
-      console.error('Missing form elements:', missingElements);
-      alert('❌ Chain form not properly initialized. Missing elements: ' + missingElements.join(', '));
+      console.error("Missing form elements:", missingElements);
+      alert(
+        "❌ Chain form not properly initialized. Missing elements: " +
+          missingElements.join(", ")
+      );
       return;
     }
-    
+
     // Populate form fields
-    formElements.chainName.value = chain.name || '';
-    formElements.chainSymbol.value = chain.symbol || '';
-    formElements.chainId.value = chain.chain_id || '';
-    formElements.chainRpcMethod.value = chain.rpc_method || '';
-    formElements.chainDefaultParams.value = chain.default_params || '';
-    formElements.chainResponsePath.value = chain.response_path || '';
-    formElements.chainHttpMethod.value = chain.http_method || 'POST';
-    formElements.chainBlockTime.value = chain.block_time || '';
-    formElements.chainDescription.value = chain.description || '';
-    formElements.chainExplorer.value = chain.explorer || '';
-    
+    formElements.chainName.value = chain.name || "";
+    formElements.chainSymbol.value = chain.symbol || "";
+    formElements.chainId.value = chain.chain_id || "";
+    formElements.chainRpcMethod.value = chain.rpc_method || "";
+    formElements.chainDefaultParams.value = chain.default_params || "";
+    formElements.chainResponsePath.value = chain.response_path || "";
+    formElements.chainHttpMethod.value = chain.http_method || "POST";
+    formElements.chainBlockTime.value = chain.block_time || "";
+    formElements.chainDescription.value = chain.description || "";
+    formElements.chainExplorer.value = chain.explorer || "";
+
     // Handle rpc_urls - ensure it's an array
     const rpcUrls = Array.isArray(chain.rpc_urls) ? chain.rpc_urls : [];
-    formElements.chainRpcUrls.value = rpcUrls.join('\n');
-    
+    formElements.chainRpcUrls.value = rpcUrls.join("\n");
+
     // Handle checkbox
     formElements.chainIsTestnet.checked = Boolean(chain.is_testnet);
 
@@ -626,12 +668,12 @@ function editChain(id) {
     if (formCard) {
       formCard.style.display = "block";
     } else {
-      console.error('Chain form card not found');
-      alert('❌ Chain form modal not found');
+      console.error("Chain form card not found");
+      alert("❌ Chain form modal not found");
     }
   } catch (error) {
-    console.error('Error populating chain form:', error);
-    alert('❌ Error loading chain data: ' + error.message);
+    console.error("Error populating chain form:", error);
+    alert("❌ Error loading chain data: " + error.message);
   }
 }
 
@@ -643,10 +685,14 @@ function hideChainForm() {
 
 // ❌ Delete chain
 async function deleteChain(id) {
-  const chain = availableChains.find(c => c.id === id);
+  const chain = availableChains.find((c) => c.id === id);
   if (!chain) return;
 
-  if (!confirm(`Delete chain "${chain.name}"? This will also delete all nodes using this chain.`)) {
+  if (
+    !confirm(
+      `Delete chain "${chain.name}"? This will also delete all nodes using this chain.`
+    )
+  ) {
     return;
   }
 
@@ -674,16 +720,24 @@ document.getElementById("chainForm")?.addEventListener("submit", async (e) => {
   const chainData = {
     name: document.getElementById("chainName").value.trim(),
     symbol: document.getElementById("chainSymbol").value.trim(),
-    chain_id: document.getElementById("chainId").value ? parseInt(document.getElementById("chainId").value) : null,
+    chain_id: document.getElementById("chainId").value
+      ? parseInt(document.getElementById("chainId").value)
+      : null,
     rpc_method: document.getElementById("chainRpcMethod").value.trim(),
-    default_params: document.getElementById("chainDefaultParams").value.trim() || '[]',
-    response_path: document.getElementById("chainResponsePath").value.trim() || 'result',
+    default_params:
+      document.getElementById("chainDefaultParams").value.trim() || "[]",
+    response_path:
+      document.getElementById("chainResponsePath").value.trim() || "result",
     http_method: document.getElementById("chainHttpMethod").value,
-    block_time: parseFloat(document.getElementById("chainBlockTime").value) || 15,
+    block_time:
+      parseFloat(document.getElementById("chainBlockTime").value) || 15,
     description: document.getElementById("chainDescription").value.trim(),
     explorer: document.getElementById("chainExplorer").value.trim(),
-    rpc_urls: document.getElementById("chainRpcUrls").value.split('\n').filter(url => url.trim()),
-    is_testnet: document.getElementById("chainIsTestnet").checked
+    rpc_urls: document
+      .getElementById("chainRpcUrls")
+      .value.split("\n")
+      .filter((url) => url.trim()),
+    is_testnet: document.getElementById("chainIsTestnet").checked,
   };
 
   try {
@@ -700,44 +754,61 @@ document.getElementById("chainForm")?.addEventListener("submit", async (e) => {
       hideChainForm();
       await refreshChains();
       await fetchChains(); // Refresh the dropdown too
-      alert("✅ Chain " + (currentChainId ? "updated" : "added") + " successfully!");
+      alert(
+        "✅ Chain " + (currentChainId ? "updated" : "added") + " successfully!"
+      );
     } else {
       const error = await res.json();
-      alert("❌ Failed to " + (currentChainId ? "update" : "add") + " chain: " + error.error);
+      alert(
+        "❌ Failed to " +
+          (currentChainId ? "update" : "add") +
+          " chain: " +
+          error.error
+      );
     }
   } catch (error) {
-    alert("❌ Failed to " + (currentChainId ? "update" : "add") + " chain: " + error.message);
+    alert(
+      "❌ Failed to " +
+        (currentChainId ? "update" : "add") +
+        " chain: " +
+        error.message
+    );
   }
 });
 
 // 🚀 Load data on page load
 document.addEventListener("DOMContentLoaded", () => {
-  fetchChains();                          // Load available chains
-  fetchStatus();                          // Initial status load
-  setInterval(fetchStatus, 60 * 1000);   // Auto-refresh every 60 seconds
+  fetchChains(); // Load available chains
+  fetchStatus(); // Initial status load
+  setInterval(fetchStatus, 60 * 1000); // Auto-refresh every 60 seconds
 
   // Attach submit handler for Edit Node modal after DOM is ready
-  const editForm = document.getElementById('editNodeForm');
+  const editForm = document.getElementById("editNodeForm");
   if (editForm) {
-    editForm.addEventListener('submit', async (e) => {
+    editForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       if (!editingNodeId) return;
 
       const node = {
-        name: document.getElementById('editName').value.trim(),
-        chain_id: parseInt(document.getElementById('editChainSelect').value),
-        local_url: document.getElementById('editLocal').value.trim(),
-        remote_url: document.getElementById('editRemote').value.trim(),
-        custom_method: document.getElementById('editRpcMethod').value.trim() || null,
-        custom_params: document.getElementById('editParams').value.trim() || '[]',
-        custom_headers: document.getElementById('editHeaders').value.trim() || '{}',
-        custom_response_path: document.getElementById('editResponsePath').value.trim() || null,
-        custom_http_method: document.getElementById('editHttpMethod').value || null,
+        name: document.getElementById("editName").value.trim(),
+        chain_id: parseInt(document.getElementById("editChainSelect").value),
+        local_url: document.getElementById("editLocal").value.trim(),
+        remote_url: document.getElementById("editRemote").value.trim(),
+        custom_method:
+          document.getElementById("editRpcMethod").value.trim() || null,
+        custom_params:
+          document.getElementById("editParams").value.trim() || "[]",
+        custom_headers:
+          document.getElementById("editHeaders").value.trim() || "{}",
+        custom_response_path:
+          document.getElementById("editResponsePath").value.trim() || null,
+        custom_http_method:
+          document.getElementById("editHttpMethod").value || null,
       };
 
       const res = await fetch(`/edit/${editingNodeId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(node),
       });
 
@@ -745,8 +816,8 @@ document.addEventListener("DOMContentLoaded", () => {
         hideEditNodeModal();
         await fetchStatus();
       } else {
-        const err = await res.json().catch(() => ({ error: 'Unknown error' }));
-        alert('❌ Failed to update node: ' + (err.error || 'Unknown error'));
+        const err = await res.json().catch(() => ({ error: "Unknown error" }));
+        alert("❌ Failed to update node: " + (err.error || "Unknown error"));
       }
     });
   }
