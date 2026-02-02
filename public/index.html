@@ -8,7 +8,7 @@
     body {
       font-family: sans-serif;
       margin: 2rem;
-      background-color: #f9f9f9;
+      background-color: #0b0e11;
     }
 
     .tabs {
@@ -27,14 +27,25 @@
       padding: 0.75rem 1.5rem;
       border: none;
       border-radius: 5px;
-      background-color: #ddd;
+      background-color: #333;
       cursor: pointer;
       font-weight: bold;
+      color: #ffffff;
     }
 
     .tab-button.active {
-      background-color: #333;
+      background-color: rgb(114, 124, 245);
       color: white;
+    }
+
+    .save-csv {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 5px;
+      background-color: #333;
+      cursor: pointer;
+      font-weight: bold;
+      color: #ffffff;
     }
 
     .tab-content {
@@ -45,40 +56,159 @@
       display: block;
     }
 
+    .form-cards {
+      margin: 0 auto;
+      padding: 20px;
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+    }
+
+    #nodeForm {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      background: #1f2630;
+      padding: 25px 30px;
+      border-radius: 12px;
+      width: 50%;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+      color: #fff;
+      animation: slideUp 0.3s ease;
+    }
+
+    .form-groups {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .form-groups input {
+      background: #2a313c;
+      border: 1px solid #333a47;
+      color: #fff;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-groups input:focus {
+      border-color: #5561f0;
+    }
+
+    .form-groups label {
+      margin-bottom: 5px;
+      font-size: 13px;
+      color: rgb(114, 124, 245);
+    }
+
+    .form-buttons {
+      grid-column: span 2; 
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 10px;
+      width: 100%;
+     }
+
+     #chainSelect {
+      background: #2a313c;
+      border: 1px solid #333a47;
+      color: #fff;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+     }
+
+     #httpMethod {
+      background: #2a313c;
+      border: 1px solid #333a47;
+      color: #fff;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+     }
+
     .form-card {
-      background: white;
-      padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-      max-width: 600px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px 25px;
+      margin-top: 20px;
     }
 
     .form-group {
-      margin-bottom: 1rem;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .form-group1 {
+      grid-column: span 2;
+      display: flex;
+      flex-direction: column;
     }
 
     label {
-      display: block;
-      font-weight: bold;
-      margin-bottom: 0.25rem;
+      font-size: 13px;
+      color: #8b95c9;
+      margin-bottom: 5px;
     }
 
-    input[type="text"], select, textarea {
-      width: 100%;
-      padding: 0.5rem;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      box-sizing: border-box;
+    input {
+      background: #2a313c;
+      border: 1px solid #333a47;
+      color: #fff;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
     }
 
-    button {
+    input:focus {
+      border-color: #5561f0;
+    }
+
+    .edit-button {
       margin-top: 1rem;
       padding: 0.75rem 1.5rem;
-      background-color: #333;
-      color: white;
       border: none;
       border-radius: 4px;
       cursor: pointer;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: white;
+      transition: 0.25s ease;
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
+    }
+
+    .edit-button:hover {
+      transform: scale(1);
+      box-shadow: 0 0 15px rgba(34, 197, 94, 0.45);
+      filter: brightness(1.1);
+    }
+
+    .delete-button {
+      margin-top: 1rem;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      background: linear-gradient(135deg, #ff4b5c, #d72638);
+      color: white;
+      transition: 0.25s ease;
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
+    }
+
+    .delete-button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 15px rgba(255, 75, 92, 0.45);
+      filter: brightness(1.1);
     }
 
     table {
@@ -89,13 +219,15 @@
     }
 
     th, td {
-      padding: 0.75rem;
-      border: 1px solid #ddd;
       text-align: left;
+      background-color: #1a1f25;
+      padding: 16px 2% 10px 3%;
+      color: rgb(114, 124, 245);
+      font-size: 12px;
     }
 
-    th {
-      background-color: #f2f2f2;
+    td {
+      color: #ffffff;
     }
 
     .healthy {
@@ -186,13 +318,13 @@
 
     .chains-title h3 {
       margin: 0 0 0.5rem 0;
-      color: #333;
+      color: rgb(114, 124, 245);
       font-size: 1.5rem;
     }
 
     .chains-title p {
       margin: 0;
-      color: #666;
+      color: rgb(114, 124, 245);
       font-size: 0.9rem;
     }
 
@@ -239,7 +371,7 @@
     }
 
     .search-box input {
-      width: 100%;
+      width: 90%;
       padding: 0.75rem 2.5rem 0.75rem 1rem;
       border: 2px solid #e0e0e0;
       border-radius: 25px;
@@ -303,18 +435,29 @@
       gap: 0.75rem;
     }
 
+    .btn-close {
+      background: #3a3f47;
+      color: #ccc;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
     .btn-primary, .btn-secondary {
       display: flex;
       align-items: center;
       gap: 0.5rem;
       padding: 0.75rem 1.5rem;
       border: none;
-      border-radius: 8px;
+      border-radius: 6px;
       cursor: pointer;
       font-size: 0.9rem;
       font-weight: 500;
       transition: all 0.3s ease;
       text-decoration: none;
+      padding: 8px 18px;
     }
 
     .btn-primary {
@@ -334,9 +477,9 @@
       border: 2px solid #e0e0e0;
     }
 
-    .btn-secondary:hover {
-      background: #e9ecef;
-      border-color: #d0d0d0;
+    .btn-close:hover {
+      background: #4a505b;
+      border-color: #4a505b;
       transform: translateY(-1px);
     }
 
@@ -495,18 +638,19 @@
       color: #333;
     }
 
-    /* Chain Form Modal */
     .chain-form-modal {
       position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 90%;
-      max-width: 600px;
-      max-height: 90vh;
-      overflow-y: auto;
-      z-index: 1000;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      top: 24%;
+      left: 24%;
+      width: 50%;
+      backdrop-filter: blur(8px);
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      padding: 20px;
+      border-radius: 10px;
     }
 
     .form-header {
@@ -514,20 +658,19 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 1.5rem;
-      padding-bottom: 1rem;
-      border-bottom: 2px solid #e0e0e0;
     }
 
     .form-header h3 {
       margin: 0;
-      color: #333;
+      font-size: 20px;
+      color: #aab4ff;
     }
 
     .close-btn {
-      background: none;
+      background: transparent;
+      color: #aaa;
       border: none;
       font-size: 1.5rem;
-      color: #999;
       cursor: pointer;
       padding: 0.5rem;
       border-radius: 50%;
@@ -535,14 +678,14 @@
     }
 
     .close-btn:hover {
-      background: #f0f0f0;
-      color: #666;
+      color: white;
+      transform: scale(1.2);
     }
 
     .chain-form {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr; 
+      gap: 16px;
     }
 
     .form-row {
@@ -593,12 +736,12 @@
     }
 
     .form-actions {
+      grid-column: span 2;
       display: flex;
+      width: 100%;
       justify-content: flex-end;
-      gap: 1rem;
-      margin-top: 1.5rem;
-      padding-top: 1rem;
-      border-top: 2px solid #e0e0e0;
+      gap: 10px;
+      margin-top: 10px;
     }
 
     /* Responsive Design */
@@ -652,7 +795,7 @@
       <button class="tab-button" id="addNodeBtn" onclick="switchTab('addNode')">Add Node</button>
       <button class="tab-button" onclick="switchTab('chains')">Chains</button>
     </div>
-    <button id="exportBtn">Export to CSV</button>
+    <button class="save-csv" id="exportBtn">Export to CSV</button>
   </div>
 
   <div id="dashboard" class="tab-content active">
@@ -675,31 +818,31 @@
   </div>
 
   <div id="addNode" class="tab-content">
-    <div class="form-card">
+    <div class="form-cards">
       <form id="nodeForm">
-        <div class="form-group">
+        <div class="form-groups">
           <label for="name">Node Name</label>
           <input type="text" id="name" required />
         </div>
 
-        <div class="form-group">
+        <div class="form-groups">
           <label for="chainSelect">Blockchain Network</label>
           <select id="chainSelect" onchange="onChainSelect()" required>
             <option value="">Select a chain...</option>
           </select>
         </div>
 
-        <div class="form-group">
+        <div class="form-groups">
           <label for="local">Local URL</label>
           <input type="text" id="local" required />
         </div>
 
-        <div class="form-group">
+        <div class="form-groups">
           <label for="remote">Remote URL</label>
           <input type="text" id="remote" required />
         </div>
 
-        <div class="form-group">
+        <div class="form-groups">
           <label for="httpMethod">HTTP Method</label>
           <select id="httpMethod">
             <option value="POST" selected>POST</option>
@@ -707,28 +850,30 @@
           </select>
         </div>
 
-        <div class="form-group">
+        <div class="form-groups">
           <label for="rpcMethod">RPC Method (Custom)</label>
           <input type="text" id="rpcMethod" placeholder="Leave empty to use chain default" />
         </div>
 
-        <div class="form-group">
+        <div class="form-groups">
           <label for="params">Params (JSON array)</label>
           <input type="text" id="params" placeholder='e.g. ["latest"]' />
         </div>
 
-        <div class="form-group">
+        <div class="form-groups">
           <label for="headers">Headers (JSON)</label>
           <input type="text" id="headers" placeholder='e.g. {"Authorization":"Bearer ..."}' />
         </div>
 
-        <div class="form-group">
+        <div class="form-groups">
           <label for="responsePath">Response Path</label>
           <input type="text" id="responsePath" placeholder='e.g. result.header.height' />
         </div>
 
-        <button id="nodeSubmitBtn" type="submit">Add Node</button>
-        <button id="nodeCancelBtn" type="button">Cancel</button>
+        <div class="form-buttons">
+          <button id="nodeSubmitBtn" type="submit" class="btn-primary">Add Node</button>
+          <button id="nodeCancelBtn" type="button" class="btn-close">Cancel</button>
+        </div>
       </form>
     </div>
   </div>
@@ -948,13 +1093,13 @@
         <input type="text" id="editHeaders" placeholder='e.g. {"Authorization":"Bearer ..."}' />
       </div>
 
-      <div class="form-group">
+      <div class="form-group1">
         <label for="editResponsePath">Response Path</label>
         <input type="text" id="editResponsePath" placeholder='e.g. result.header.height' />
       </div>
 
       <div class="form-actions">
-        <button type="button" onclick="hideEditNodeModal()" class="btn-secondary">Cancel</button>
+        <button type="button" onclick="hideEditNodeModal()" class="btn-close">Cancel</button>
         <button type="submit" id="editNodeSubmitBtn" class="btn-primary"><span class="btn-text">Update Node</span></button>
       </div>
     </form>
