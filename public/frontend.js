@@ -1,85 +1,90 @@
+// UI class helpers
+function nodeAvatarClass(index) { return `av-${(index % 5) + 1}`; }
+
+function chainPillClass(symbol) {
+  const map = { ETH: "cp-blue", BNB: "cp-amber", MATIC: "cp-purple", AVAX: "cp-red", SOL: "cp-teal" };
+  return map[symbol] || "cp-blue";
+}
+
+function statusPillClass(status) {
+  if (status === "Healthy") return "sp-ok";
+  if (status === "Degrading") return "sp-warn";
+  if (status === "Out of Sync") return "sp-err";
+  return "sp-off";
+}
+
+function delayChipClass(delay) {
+  if (!delay || delay === "—") return "dc-ok";
+  const n = parseInt(delay);
+  if (isNaN(n)) return "dc-ok";
+  if (n <= 3) return "dc-ok";
+  if (n <= 10) return "dc-warn";
+  return "dc-err";
+}
+
 // 📊 Fetch node status and update dashboard
 async function fetchStatus() {
   const res = await fetch("/status");
   let data = await res.json();
 
-  // 🔤 Sort by name alphabetically (case-insensitive)
-  data.sort((a, b) =>
-    a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
-  );
+  data.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
 
   const tbody = document.querySelector("#statusTable tbody");
   tbody.innerHTML = "";
 
-  data.forEach((node) => {
+  const total = data.length;
+  const healthy = data.filter(n => n.status === "Healthy").length;
+  const warnings = data.filter(n => n.status === "Degrading").length;
+  const errors = data.filter(n => n.status === "Out of Sync" || n.status === "Offline").length;
+
+  const statTotal = document.getElementById("statTotal");
+  const statHealthy = document.getElementById("statHealthy");
+  const statWarning = document.getElementById("statWarning");
+  const statError = document.getElementById("statError");
+  const panelSubtitle = document.getElementById("panelSubtitle");
+
+  if (statTotal) statTotal.textContent = total;
+  if (statHealthy) statHealthy.textContent = healthy;
+  if (statWarning) statWarning.textContent = warnings;
+  if (statError) statError.textContent = errors;
+  if (panelSubtitle) panelSubtitle.textContent = `${total} node${total !== 1 ? "s" : ""} monitored`;
+
+  data.forEach((node, index) => {
     const row = document.createElement("tr");
+    const avClass = nodeAvatarClass(index);
+    const cpClass = chainPillClass(node.chain_symbol || "");
+    const spClass = statusPillClass(node.status);
+    const dcClass = delayChipClass(node.delay);
+    const initials = (node.name || "??").substring(0, 2).toUpperCase();
+    const chainLabel = `${node.chain_name || "Unknown"} (${node.chain_symbol || "?"})`;
+    const delay = node.delay ?? "—";
+    const error = node.error ?? "";
+    const lastChecked = node.lastChecked ? new Date(node.lastChecked).toLocaleString() : "—";
 
-    // 🟢🟡🔴 Color logic based on refined status
-    row.className =
-      node.status === "Healthy"
-        ? "healthy"
-        : node.status === "Degrading"
-        ? "degrading"
-        : node.status === "Out of Sync"
-        ? "out-of-sync"
-        : node.status === "Offline"
-        ? "offline"
-        : "unknown";
-
-    // Create table cells
-    const nameCell = document.createElement("td");
-    nameCell.textContent = node.name;
-
-    const chainCell = document.createElement("td");
-    chainCell.textContent = `${node.chain_name || "Unknown"} (${
-      node.chain_symbol || "?"
-    })`;
-
-    const statusCell = document.createElement("td");
-    statusCell.textContent = node.status;
-
-    const localHeightCell = document.createElement("td");
-    localHeightCell.textContent = node.localHeight ?? "—";
-
-    const remoteHeightCell = document.createElement("td");
-    remoteHeightCell.textContent = node.remoteHeight ?? "—";
-
-    const delayCell = document.createElement("td");
-    delayCell.textContent = node.delay ?? "—";
-
-    const lastCheckedCell = document.createElement("td");
-    lastCheckedCell.textContent = new Date(node.lastChecked).toLocaleString();
-
-    const errorCell = document.createElement("td");
-    errorCell.textContent = node.error ?? "";
-
-    // Create action buttons
-    const editBtn = document.createElement("button");
-    editBtn.textContent = "✏️ Edit";
-    editBtn.className = "edit-button";
-    editBtn.onclick = () => editNode(node.id);
-    editBtn.style.marginRight = "0.5rem";
-
-    const deleteBtn = document.createElement("button");
-    deleteBtn.textContent = "🗑 Delete";
-    deleteBtn.className = "delete-button";
-    deleteBtn.onclick = () => deleteNode(node.id);
-
-    const actionsCell = document.createElement("td");
-    actionsCell.appendChild(editBtn);
-    actionsCell.appendChild(deleteBtn);
-
-    // Append all cells to row
-    row.appendChild(nameCell);
-    row.appendChild(chainCell);
-    row.appendChild(statusCell);
-    row.appendChild(localHeightCell);
-    row.appendChild(remoteHeightCell);
-    row.appendChild(delayCell);
-    row.appendChild(lastCheckedCell);
-    row.appendChild(errorCell);
-    row.appendChild(actionsCell);
-
+    row.innerHTML = `
+      <td>
+        <div class="node-cell">
+          <div class="node-av ${avClass}">${initials}</div>
+          <div>
+            <div class="node-nm">${node.name}</div>
+            <div class="node-id">#${node.id}</div>
+          </div>
+        </div>
+      </td>
+      <td><span class="chain-pill ${cpClass}"><span class="cdot"></span>${chainLabel}</span></td>
+      <td><span class="status-pill ${spClass}"><span class="sdot"></span>${node.status}</span></td>
+      <td class="mono">${node.localHeight ?? "—"}</td>
+      <td class="mono">${node.remoteHeight ?? "—"}</td>
+      <td><span class="delay-chip ${dcClass}">${delay}</span></td>
+      <td class="mono-sm">${lastChecked}</td>
+      <td class="err-text" style="color:var(--red);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${error}</td>
+      <td>
+        <div class="act-wrap">
+          <button class="btn-ed" onclick="editNode(${node.id})">✏ Edit</button>
+          <button class="btn-dl" onclick="deleteNode(${node.id})">✕ Delete</button>
+        </div>
+      </td>
+    `;
     tbody.appendChild(row);
   });
 }
@@ -146,18 +151,90 @@ function onChainSelect() {
   populateChainDefaults(chain);
 }
 
+// Show/hide custom URL input when "Enter custom URL..." is selected in a remote URL select.
+function onRemoteSelectChange(selectEl, customInputId) {
+  const customInput = document.getElementById(customInputId);
+  if (!customInput) return;
+  if (selectEl.value === "__custom__") {
+    customInput.style.display = "block";
+    customInput.focus();
+  } else {
+    customInput.style.display = "none";
+  }
+}
+
+// Return the effective remote URL value from a select + optional custom input pair.
+function getRemoteUrlValue(selectId, customInputId) {
+  const select = document.getElementById(selectId);
+  if (!select) return "";
+  if (select.value === "__custom__") {
+    const customInput = document.getElementById(customInputId);
+    return customInput ? customInput.value.trim() : "";
+  }
+  return select.value;
+}
+
+// Populate a remote URL <select> with chain rpc_urls and handle custom URL state.
+// selectId: the <select> element id
+// rpcUrls: array (or JSON string) of URLs from the chain
+// selectedUrl: the currently saved URL to pre-select
+// customInputId: the id of the paired custom text input
+function populateRemoteDropdown(selectId, rpcUrls, selectedUrl = "", customInputId = null) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+
+  let urls = [];
+  if (Array.isArray(rpcUrls)) {
+    urls = rpcUrls.filter(u => u && typeof u === "string");
+  } else if (typeof rpcUrls === "string") {
+    try {
+      const parsed = JSON.parse(rpcUrls);
+      urls = Array.isArray(parsed) ? parsed.filter(u => u && typeof u === "string") : [];
+    } catch { urls = []; }
+  }
+
+  const customInput = customInputId ? document.getElementById(customInputId) : null;
+
+  if (urls.length === 0) {
+    select.innerHTML = '<option value="" disabled selected>Select a chain first...</option>';
+    select.disabled = true;
+    if (customInput) { customInput.style.display = "none"; customInput.value = ""; }
+    return;
+  }
+
+  select.disabled = false;
+  select.innerHTML = "";
+  urls.forEach(url => {
+    const opt = document.createElement("option");
+    opt.value = url;
+    opt.textContent = url;
+    select.appendChild(opt);
+  });
+
+  const customOpt = document.createElement("option");
+  customOpt.value = "__custom__";
+  customOpt.textContent = "✎ Enter custom URL...";
+  select.appendChild(customOpt);
+
+  if (selectedUrl && urls.includes(selectedUrl)) {
+    select.value = selectedUrl;
+    if (customInput) customInput.style.display = "none";
+  } else if (selectedUrl) {
+    select.value = "__custom__";
+    if (customInput) { customInput.style.display = "block"; customInput.value = selectedUrl; }
+  } else {
+    select.value = urls[0];
+    if (customInput) customInput.style.display = "none";
+  }
+}
+
 // 📝 Populate form with chain defaults
 function populateChainDefaults(chain) {
   document.getElementById("rpcMethod").value = chain.rpc_method || "";
   document.getElementById("params").value = chain.default_params || "[]";
-  document.getElementById("responsePath").value =
-    chain.response_path || "result";
+  document.getElementById("responsePath").value = chain.response_path || "result";
   document.getElementById("httpMethod").value = chain.http_method || "POST";
-
-  // Pre-fill remote URL with first available RPC
-  if (chain.rpc_urls && chain.rpc_urls.length > 0) {
-    document.getElementById("remote").value = chain.rpc_urls[0];
-  }
+  populateRemoteDropdown("remote", chain.rpc_urls || [], "", "remoteCustom");
 }
 
 // 🧹 Clear chain defaults
@@ -166,7 +243,7 @@ function clearChainDefaults() {
   document.getElementById("params").value = "[]";
   document.getElementById("responsePath").value = "result";
   document.getElementById("httpMethod").value = "POST";
-  document.getElementById("remote").value = "";
+  populateRemoteDropdown("remote", [], "", "remoteCustom");
 }
 
 // ➕ Handle Add Node form
@@ -179,11 +256,17 @@ document.getElementById("nodeForm")?.addEventListener("submit", async (e) => {
     return;
   }
 
+  const remoteUrl = getRemoteUrlValue("remote", "remoteCustom");
+  if (!remoteUrl) {
+    alert("❌ Please select or enter a Remote URL");
+    return;
+  }
+
   const node = {
     name: document.getElementById("name").value.trim(),
     chain_id: parseInt(chainId),
     local_url: document.getElementById("local").value.trim(),
-    remote_url: document.getElementById("remote").value.trim(),
+    remote_url: remoteUrl,
     custom_method: document.getElementById("rpcMethod").value.trim() || null,
     custom_params: document.getElementById("params").value.trim() || "[]",
     custom_headers: document.getElementById("headers").value.trim() || "{}",
@@ -251,7 +334,14 @@ async function editNode(id) {
     document.getElementById("editChainSelect").value = node.chain_id || "";
     onEditChainSelect();
     document.getElementById("editLocal").value = node.local_url || "";
-    document.getElementById("editRemote").value = node.remote_url || "";
+
+    // Populate remote URL dropdown; ensures saved URL is selectable even if not in chain list
+    const chainSelect = document.getElementById("editChainSelect");
+    const chainOption = chainSelect.options[chainSelect.selectedIndex];
+    const chainRpcUrls = chainOption && chainOption.dataset.chain
+      ? JSON.parse(chainOption.dataset.chain).rpc_urls || []
+      : [];
+    populateEditRemoteDropdown(chainRpcUrls, node.remote_url || "");
     document.getElementById("editRpcMethod").value = node.custom_method || "";
     document.getElementById("editParams").value = node.custom_params || "[]";
     document.getElementById("editHeaders").value = node.custom_headers || "{}";
@@ -269,7 +359,7 @@ async function editNode(id) {
 // ===== Edit Node Modal helpers =====
 function showEditNodeModal() {
   const modal = document.getElementById("editNodeModal");
-  if (modal) modal.style.display = "block";
+  if (modal) modal.style.display = "flex";
 }
 
 function hideEditNodeModal() {
@@ -291,6 +381,10 @@ function populateEditChainDropdown() {
   });
 }
 
+function populateEditRemoteDropdown(rpcUrls, selectedUrl = "") {
+  populateRemoteDropdown("editRemote", rpcUrls, selectedUrl, "editRemoteCustom");
+}
+
 function onEditChainSelect() {
   const select = document.getElementById("editChainSelect");
   if (!select) return;
@@ -302,7 +396,6 @@ function onEditChainSelect() {
   const paramsEl = document.getElementById("editParams");
   const respPathEl = document.getElementById("editResponsePath");
   const httpMethodEl = document.getElementById("editHttpMethod");
-  const remoteEl = document.getElementById("editRemote");
   if (methodEl && !methodEl.value) methodEl.value = chain.rpc_method || "";
   if (paramsEl && (!paramsEl.value || paramsEl.value === "[]"))
     paramsEl.value = chain.default_params || "[]";
@@ -310,8 +403,7 @@ function onEditChainSelect() {
     respPathEl.value = chain.response_path || "result";
   if (httpMethodEl && !httpMethodEl.value)
     httpMethodEl.value = chain.http_method || "POST";
-  if (remoteEl && !remoteEl.value && chain.rpc_urls && chain.rpc_urls.length)
-    remoteEl.value = chain.rpc_urls[0];
+  populateEditRemoteDropdown(chain.rpc_urls || []);
 }
 
 // ⬇️ Export table to CSV
@@ -334,70 +426,14 @@ document.getElementById("exportBtn")?.addEventListener("click", () => {
 
 // 🔗 Chain Management Functions
 
-// 📊 Display chains in the enhanced UI
+// 📊 Update chain stats and re-render cards (does not replace #chains DOM)
 function displayChains() {
-  const container = document.getElementById("chains");
-  if (!container) return;
-
-  // Show loading state
-  container.innerHTML = `
-    <div class="chains-header">
-      <div class="chains-title">
-        <h3>🌐 Blockchain Networks</h3>
-        <p>Manage supported blockchain networks and their configurations</p>
-      </div>
-      <div class="chains-stats">
-        <div class="stat-item">
-          <span class="stat-number" id="totalChains">${
-            availableChains.length
-          }</span>
-          <span class="stat-label">Total</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-number" id="mainnetChains">${
-            availableChains.filter((c) => !c.is_testnet).length
-          }</span>
-          <span class="stat-label">Mainnet</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-number" id="testnetChains">${
-            availableChains.filter((c) => c.is_testnet).length
-          }</span>
-          <span class="stat-label">Testnet</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="chains-controls">
-      <div class="search-box">
-        <input type="text" id="chainSearch" placeholder="🔍 Search chains..." oninput="filterChains()">
-        <button class="clear-search" onclick="clearSearch()" style="display: none;">✕</button>
-      </div>
-      <div class="filter-buttons">
-        <button class="filter-btn active" onclick="setFilter('all')">All</button>
-        <button class="filter-btn" onclick="setFilter('mainnet')">Mainnet</button>
-        <button class="filter-btn" onclick="setFilter('testnet')">Testnet</button>
-      </div>
-      <div class="action-buttons">
-        <button class="btn-secondary" onclick="refreshChains()">
-          <span class="btn-icon">🔄</span> Refresh
-        </button>
-        <button class="btn-primary" onclick="showAddChainForm()">
-          <span class="btn-icon">➕</span> Add Chain
-        </button>
-      </div>
-    </div>
-
-    <div class="chains-container">
-      <div class="loading-spinner" id="chainsLoading" style="display: none;">
-        <div class="spinner"></div>
-        <p>Loading chains...</p>
-      </div>
-      <div class="chains-grid" id="chainsGrid"></div>
-    </div>
-  `;
-
-  // Apply current filters
+  const total = document.getElementById("totalChains");
+  const mainnet = document.getElementById("mainnetChains");
+  const testnet = document.getElementById("testnetChains");
+  if (total) total.textContent = availableChains.length;
+  if (mainnet) mainnet.textContent = availableChains.filter(c => !c.is_testnet).length;
+  if (testnet) testnet.textContent = availableChains.filter(c => c.is_testnet).length;
   applyFilters();
 }
 
@@ -432,7 +468,7 @@ function renderChainCards() {
   if (filteredChains.length === 0) {
     grid.innerHTML = `
       <div class="no-chains">
-        <div class="no-chains-icon">🔍</div>
+        <div style="font-size:32px;margin-bottom:12px">🔍</div>
         <h4>No chains found</h4>
         <p>Try adjusting your search or filter criteria</p>
       </div>
@@ -440,67 +476,44 @@ function renderChainCards() {
     return;
   }
 
-  grid.innerHTML = filteredChains
-    .map(
-      (chain) => `
-    <div class="chain-card">
-      <div class="chain-card-header">
-        <div class="chain-info">
-          <h4>${chain.name}</h4>
-          <div class="chain-symbol">${chain.symbol}</div>
+  grid.innerHTML = filteredChains.map(chain => {
+    const urlCount = chain.rpc_urls ? chain.rpc_urls.length : 0;
+    return `
+      <div class="chain-card">
+        <div class="chain-card-top">
+          <div>
+            <div class="chain-card-name">${chain.name}</div>
+            <div class="chain-card-sym">${chain.symbol}</div>
+          </div>
+          <span class="type-badge ${chain.is_testnet ? "badge-test" : "badge-main"}">${chain.is_testnet ? "Testnet" : "Mainnet"}</span>
         </div>
-        <div class="chain-type-badge ${
-          chain.is_testnet ? "testnet" : "mainnet"
-        }">
-          ${chain.is_testnet ? "Testnet" : "Mainnet"}
+        <div class="chain-divider"></div>
+        <div class="chain-details">
+          <div class="chain-detail-row">
+            <span class="cd-label">Chain ID</span>
+            <span class="cd-value highlight">${chain.chain_id || "—"}</span>
+          </div>
+          <div class="chain-detail-row">
+            <span class="cd-label">Block Time</span>
+            <span class="cd-value">${chain.block_time}s</span>
+          </div>
+          <div class="chain-detail-row">
+            <span class="cd-label">RPC Method</span>
+            <span class="cd-value">${chain.rpc_method}</span>
+          </div>
+          <div class="chain-detail-row">
+            <span class="cd-label">RPC URLs</span>
+            <span class="cd-value">${urlCount} endpoint${urlCount !== 1 ? "s" : ""}</span>
+          </div>
+        </div>
+        ${chain.description ? `<div class="chain-desc">${chain.description}</div>` : ""}
+        <div class="chain-card-actions">
+          <button class="btn-ce" onclick="editChain(${chain.id})">✏ Edit</button>
+          <button class="btn-cd" onclick="deleteChain(${chain.id})">✕ Delete</button>
         </div>
       </div>
-      
-      <div class="chain-details">
-        <div class="detail-row">
-          <span class="detail-label">Chain ID:</span>
-          <span class="detail-value">${chain.chain_id || "—"}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">RPC Method:</span>
-          <span class="detail-value">${chain.rpc_method}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Block Time:</span>
-          <span class="detail-value">${chain.block_time}s</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">RPC URLs:</span>
-          <span class="detail-value">${
-            chain.rpc_urls ? chain.rpc_urls.length : 0
-          }</span>
-        </div>
-        ${
-          chain.description
-            ? `
-        <div class="detail-row">
-          <span class="detail-label">Description:</span>
-          <span class="detail-value">${chain.description.substring(0, 50)}${
-                chain.description.length > 50 ? "..." : ""
-              }</span>
-        </div>
-        `
-            : ""
-        }
-      </div>
-      
-      <div class="chain-actions">
-        <button class="edit-btn" onclick="editChain(${chain.id})">
-          ✏️ Edit
-        </button>
-        <button class="delete-btn" onclick="deleteChain(${chain.id})">
-          🗑 Delete
-        </button>
-      </div>
-    </div>
-  `
-    )
-    .join("");
+    `;
+  }).join("");
 }
 
 // 🔍 Handle search input
@@ -584,7 +597,7 @@ function showAddChainForm() {
   formTitle.textContent = "Add Custom Chain";
   submitBtn.textContent = "Add Chain";
   form.reset();
-  formCard.style.display = "block";
+  formCard.style.display = "flex";
 }
 
 // ✏️ Edit chain
@@ -632,7 +645,7 @@ function editChain(id) {
 
     // Check if all required form elements exist
     const missingElements = Object.entries(formElements)
-      .filter(([name, element]) => !element)
+      .filter(([, element]) => !element)
       .map(([name]) => name);
 
     if (missingElements.length > 0) {
@@ -666,7 +679,7 @@ function editChain(id) {
     // Show the form
     const formCard = document.getElementById("chainFormCard");
     if (formCard) {
-      formCard.style.display = "block";
+      formCard.style.display = "flex";
     } else {
       console.error("Chain form card not found");
       alert("❌ Chain form modal not found");
@@ -793,7 +806,7 @@ document.addEventListener("DOMContentLoaded", () => {
         name: document.getElementById("editName").value.trim(),
         chain_id: parseInt(document.getElementById("editChainSelect").value),
         local_url: document.getElementById("editLocal").value.trim(),
-        remote_url: document.getElementById("editRemote").value.trim(),
+        remote_url: getRemoteUrlValue("editRemote", "editRemoteCustom"),
         custom_method:
           document.getElementById("editRpcMethod").value.trim() || null,
         custom_params:

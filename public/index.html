@@ -3,1106 +3,671 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Node Sync Checker</title>
+  <title>NodeSync — Blockchain Monitor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: sans-serif;
-      margin: 2rem;
-      background-color: #0b0e11;
-    }
-
-    .tabs {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-    }
-
-    .tab-buttons {
-      display: flex;
-      gap: 1rem;
-    }
-
-    .tab-button {
-      padding: 0.75rem 1.5rem;
-      border: none;
-      border-radius: 5px;
-      background-color: #333;
-      cursor: pointer;
-      font-weight: bold;
-      color: #ffffff;
-    }
-
-    .tab-button.active {
-      background-color: rgb(114, 124, 245);
-      color: white;
-    }
-
-    .save-csv {
-      padding: 0.75rem 1.5rem;
-      border: none;
-      border-radius: 5px;
-      background-color: #333;
-      cursor: pointer;
-      font-weight: bold;
-      color: #ffffff;
-    }
-
-    .tab-content {
-      display: none;
-    }
-
-    .tab-content.active {
-      display: block;
-    }
-
-    .form-cards {
-      margin: 0 auto;
-      padding: 20px;
-      backdrop-filter: blur(8px);
-      display: flex;
-      align-items: center;
-    }
-
-    #nodeForm {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      background: #1f2630;
-      padding: 25px 30px;
-      border-radius: 12px;
-      width: 50%;
-      box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
-      color: #fff;
-      animation: slideUp 0.3s ease;
-    }
-
-    .form-groups {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .form-groups input {
-      background: #2a313c;
-      border: 1px solid #333a47;
-      color: #fff;
-      padding: 8px 10px;
-      border-radius: 6px;
-      font-size: 13px;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .form-groups input:focus {
-      border-color: #5561f0;
-    }
-
-    .form-groups label {
-      margin-bottom: 5px;
-      font-size: 13px;
-      color: rgb(114, 124, 245);
-    }
-
-    .form-buttons {
-      grid-column: span 2; 
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      margin-top: 10px;
-      width: 100%;
-     }
-
-     #chainSelect {
-      background: #2a313c;
-      border: 1px solid #333a47;
-      color: #fff;
-      padding: 8px 10px;
-      border-radius: 6px;
-      font-size: 13px;
-      outline: none;
-      transition: border-color 0.2s;
-     }
-
-     #httpMethod {
-      background: #2a313c;
-      border: 1px solid #333a47;
-      color: #fff;
-      padding: 8px 10px;
-      border-radius: 6px;
-      font-size: 13px;
-      outline: none;
-      transition: border-color 0.2s;
-     }
-
-    .form-card {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px 25px;
-      margin-top: 20px;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .form-group1 {
-      grid-column: span 2;
-      display: flex;
-      flex-direction: column;
-    }
-
-    label {
-      font-size: 13px;
-      color: #8b95c9;
-      margin-bottom: 5px;
-    }
-
-    input {
-      background: #2a313c;
-      border: 1px solid #333a47;
-      color: #fff;
-      padding: 8px 10px;
-      border-radius: 6px;
-      font-size: 13px;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    input:focus {
-      border-color: #5561f0;
-    }
-
-    .edit-button {
-      margin-top: 1rem;
-      padding: 0.75rem 1.5rem;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      color: white;
-      transition: 0.25s ease;
-      box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
-    }
-
-    .edit-button:hover {
-      transform: scale(1);
-      box-shadow: 0 0 15px rgba(34, 197, 94, 0.45);
-      filter: brightness(1.1);
-    }
-
-    .delete-button {
-      margin-top: 1rem;
-      padding: 0.75rem 1.5rem;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      background: linear-gradient(135deg, #ff4b5c, #d72638);
-      color: white;
-      transition: 0.25s ease;
-      box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
-    }
-
-    .delete-button:hover {
-      transform: scale(1.1);
-      box-shadow: 0 0 15px rgba(255, 75, 92, 0.45);
-      filter: brightness(1.1);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-    }
-
-    th, td {
-      text-align: left;
-      background-color: #1a1f25;
-      padding: 16px 2% 10px 3%;
-      color: rgb(114, 124, 245);
-      font-size: 12px;
-    }
-
-    td {
-      color: #ffffff;
-    }
-
-    .healthy {
-      background-color: #e6ffe6; /* light green */
-    }
-
-    .degrading {
-      background-color: #fffdd0; /* light yellow */
-    }
-
-    .out-of-sync {
-      background-color: #ffe6e6; /* light red */
-    }
-
-    .offline {
-      background-color: #f2f2f2; /* gray */
-    }
-
-    .unknown {
-      background-color: #e0e0ff; /* soft blue */
-    }
-
-    #exportBtn {
-      float: right;
-      margin-bottom: 1rem;
-      background-color: #555;
-    }
-
-    #chainsTable {
-      margin-top: 1rem;
-    }
-
-    #chainsTable th {
-      background-color: #f2f2f2;
-      font-weight: bold;
-    }
-
-    #chainsTable td {
-      padding: 0.5rem;
-      font-size: 0.9rem;
-    }
-
-    .testnet {
-      background-color: #fff3cd;
-      color: #856404;
-      padding: 0.2rem 0.5rem;
-      border-radius: 3px;
-      font-size: 0.8rem;
-    }
-
-    .mainnet {
-      background-color: #d4edda;
-      color: #155724;
-      padding: 0.2rem 0.5rem;
-      border-radius: 3px;
-      font-size: 0.8rem;
-    }
-
-    textarea {
-      width: 100%;
-      padding: 0.5rem;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      box-sizing: border-box;
-      font-family: monospace;
-    }
-
-    .chain-actions {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .chain-actions button {
-      padding: 0.3rem 0.6rem;
-      font-size: 0.8rem;
-      margin: 0;
-    }
-
-    /* Enhanced Chains UI */
-    .chains-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 2rem;
-      padding-bottom: 1rem;
-      border-bottom: 2px solid #e0e0e0;
-    }
-
-    .chains-title h3 {
-      margin: 0 0 0.5rem 0;
-      color: rgb(114, 124, 245);
-      font-size: 1.5rem;
-    }
-
-    .chains-title p {
-      margin: 0;
-      color: rgb(114, 124, 245);
-      font-size: 0.9rem;
-    }
-
-    .chains-stats {
-      display: flex;
-      gap: 1.5rem;
-    }
-
-    .stat-item {
-      text-align: center;
-      padding: 0.5rem;
-      background: #f8f9fa;
-      border-radius: 8px;
-      min-width: 80px;
-    }
-
-    .stat-number {
-      display: block;
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: #333;
-    }
-
-    .stat-label {
-      display: block;
-      font-size: 0.8rem;
-      color: #666;
-      margin-top: 0.25rem;
-    }
-
-    .chains-controls {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-
-    .search-box {
-      position: relative;
-      flex: 1;
-      min-width: 200px;
-    }
-
-    .search-box input {
-      width: 90%;
-      padding: 0.75rem 2.5rem 0.75rem 1rem;
-      border: 2px solid #e0e0e0;
-      border-radius: 25px;
-      font-size: 0.9rem;
-      transition: all 0.3s ease;
-    }
-
-    .search-box input:focus {
-      border-color: #007bff;
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-    }
-
-    .clear-search {
-      position: absolute;
-      right: 0.75rem;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      color: #999;
-      cursor: pointer;
-      padding: 0.25rem;
-      border-radius: 50%;
-      transition: all 0.2s ease;
-    }
-
-    .clear-search:hover {
-      background: #f0f0f0;
-      color: #666;
-    }
-
-    .filter-buttons {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .filter-btn {
-      padding: 0.5rem 1rem;
-      border: 2px solid #e0e0e0;
-      background: white;
-      border-radius: 20px;
-      cursor: pointer;
-      font-size: 0.9rem;
-      transition: all 0.3s ease;
-    }
-
-    .filter-btn:hover {
-      border-color: #007bff;
-      color: #007bff;
-    }
-
-    .filter-btn.active {
-      background: #007bff;
-      border-color: #007bff;
-      color: white;
-    }
-
-    .action-buttons {
-      display: flex;
-      gap: 0.75rem;
-    }
-
-    .btn-close {
-      background: #3a3f47;
-      color: #ccc;
-      border: none;
-      padding: 8px 18px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .btn-primary, .btn-secondary {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.75rem 1.5rem;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.9rem;
-      font-weight: 500;
-      transition: all 0.3s ease;
-      text-decoration: none;
-      padding: 8px 18px;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #007bff, #0056b3);
-      color: white;
-    }
-
-    .btn-primary:hover {
-      background: linear-gradient(135deg, #0056b3, #004085);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-    }
-
-    .btn-secondary {
-      background: #f8f9fa;
-      color: #666;
-      border: 2px solid #e0e0e0;
-    }
-
-    .btn-close:hover {
-      background: #4a505b;
-      border-color: #4a505b;
-      transform: translateY(-1px);
-    }
-
-    .btn-icon {
-      font-size: 1rem;
-    }
-
-    .chains-container {
-      position: relative;
-      min-height: 200px;
-    }
-
-    .loading-spinner {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 3rem;
-      color: #666;
-    }
-
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #007bff;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 1rem;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .chains-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 1.5rem;
-      margin-top: 1rem;
-    }
-
-    .chain-card {
-      background: white;
-      border: 2px solid #e0e0e0;
-      border-radius: 12px;
-      padding: 1.5rem;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .chain-card:hover {
-      border-color: #007bff;
-      transform: translateY(-4px);
-      box-shadow: 0 8px 25px rgba(0, 123, 255, 0.15);
-    }
-
-    .chain-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 1rem;
-    }
-
-    .chain-info h4 {
-      margin: 0 0 0.25rem 0;
-      color: #333;
-      font-size: 1.1rem;
-    }
-
-    .chain-symbol {
-      color: #666;
-      font-size: 0.9rem;
-      font-weight: 500;
-    }
-
-    .chain-type-badge {
-      padding: 0.25rem 0.75rem;
-      border-radius: 12px;
-      font-size: 0.8rem;
-      font-weight: 500;
-    }
-
-    .chain-details {
-      margin-bottom: 1.5rem;
-    }
-
-    .detail-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 0.5rem;
-      font-size: 0.9rem;
-    }
-
-    .detail-label {
-      color: #666;
-    }
-
-    .detail-value {
-      color: #333;
-      font-weight: 500;
-    }
-
-    .chain-actions {
-      display: flex;
-      gap: 0.5rem;
-      justify-content: flex-end;
-    }
-
-    .chain-actions button {
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.8rem;
-      font-weight: 500;
-      transition: all 0.2s ease;
-    }
-
-    .edit-btn {
-      background: #28a745;
-      color: white;
-    }
-
-    .edit-btn:hover {
-      background: #218838;
-      transform: translateY(-1px);
-    }
-
-    .delete-btn {
-      background: #dc3545;
-      color: white;
-    }
-
-    .delete-btn:hover {
-      background: #c82333;
-      transform: translateY(-1px);
-    }
-
-    .no-chains {
-      text-align: center;
-      padding: 3rem;
-      color: #666;
-    }
-
-    .no-chains-icon {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-      opacity: 0.5;
-    }
-
-    .no-chains h4 {
-      margin: 0 0 0.5rem 0;
-      color: #333;
-    }
-
-    .chain-form-modal {
-      position: fixed;
-      top: 24%;
-      left: 24%;
-      width: 50%;
-      backdrop-filter: blur(8px);
-      background: rgba(0, 0, 0, 0.6);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 2000;
-      padding: 20px;
-      border-radius: 10px;
-    }
-
-    .form-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-    }
-
-    .form-header h3 {
-      margin: 0;
-      font-size: 20px;
-      color: #aab4ff;
-    }
-
-    .close-btn {
-      background: transparent;
-      color: #aaa;
-      border: none;
-      font-size: 1.5rem;
-      cursor: pointer;
-      padding: 0.5rem;
-      border-radius: 50%;
-      transition: all 0.2s ease;
-    }
-
-    .close-btn:hover {
-      color: white;
-      transform: scale(1.2);
-    }
-
-    .chain-form {
-      display: grid;
-      grid-template-columns: 1fr 1fr; 
-      gap: 16px;
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-    }
-
-    .checkbox-group {
-      margin: 0.5rem 0;
-    }
-
-    .checkbox-label {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-
-    .checkbox-label input[type="checkbox"] {
-      display: none;
-    }
-
-    .checkbox-custom {
-      width: 20px;
-      height: 20px;
-      border: 2px solid #ddd;
-      border-radius: 4px;
-      position: relative;
-      transition: all 0.2s ease;
-    }
-
-    .checkbox-label input[type="checkbox"]:checked + .checkbox-custom {
-      background: #007bff;
-      border-color: #007bff;
-    }
-
-    .checkbox-label input[type="checkbox"]:checked + .checkbox-custom::after {
-      content: '✓';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: white;
-      font-size: 12px;
-      font-weight: bold;
-    }
-
-    .form-actions {
-      grid-column: span 2;
-      display: flex;
-      width: 100%;
-      justify-content: flex-end;
-      gap: 10px;
-      margin-top: 10px;
-    }
-
-    /* Responsive Design */
-    @media (max-width: 768px) {
-      .chains-header {
-        flex-direction: column;
-        gap: 1rem;
-      }
-
-      .chains-stats {
-        justify-content: center;
-      }
-
-      .chains-controls {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .search-box {
-        min-width: auto;
-      }
-
-      .filter-buttons {
-        justify-content: center;
-      }
-
-      .action-buttons {
-        justify-content: center;
-      }
-
-      .chains-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .form-row {
-        grid-template-columns: 1fr;
-      }
-
-      .chain-form-modal {
-        width: 95%;
-        margin: 1rem;
-      }
-    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #07080f;
+      --glass: rgba(255,255,255,0.04);
+      --glass-h: rgba(255,255,255,0.07);
+      --border: rgba(255,255,255,0.08);
+      --border2: rgba(255,255,255,0.14);
+      --input-bg: rgba(255,255,255,0.05);
+      --input-border: rgba(255,255,255,0.1);
+      --purple: #a78bfa;
+      --purple2: #7c3aed;
+      --blue: #60a5fa;
+      --blue2: #3b82f6;
+      --teal: #2dd4bf;
+      --green: #34d399;
+      --amber: #fbbf24;
+      --red: #f87171;
+      --t1: rgba(255,255,255,0.92);
+      --t2: rgba(255,255,255,0.52);
+      --t3: rgba(255,255,255,0.28);
+    }
+    body { background: var(--bg); color: var(--t1); font-family: 'Outfit', sans-serif; min-height: 100vh; overflow-x: hidden; }
+
+    /* ── Glows ── */
+    .glow1 { position:fixed; top:-200px; left:-150px; width:700px; height:700px; background:radial-gradient(circle,rgba(124,58,237,0.13) 0%,transparent 65%); pointer-events:none; z-index:0; }
+    .glow2 { position:fixed; bottom:-150px; right:-100px; width:550px; height:550px; background:radial-gradient(circle,rgba(59,130,246,0.1) 0%,transparent 65%); pointer-events:none; z-index:0; }
+    .glow3 { position:fixed; top:40%; left:50%; width:400px; height:400px; background:radial-gradient(circle,rgba(45,212,191,0.05) 0%,transparent 65%); pointer-events:none; z-index:0; transform:translate(-50%,-50%); }
+    .app { position:relative; z-index:1; }
+
+    /* ── Nav ── */
+    nav { display:flex; align-items:center; justify-content:space-between; padding:0 40px; height:68px; background:rgba(7,8,15,0.85); border-bottom:1px solid var(--border); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); position:sticky; top:0; z-index:100; }
+    .nav-logo { display:flex; align-items:center; gap:14px; }
+    .nav-logo-mark { width:38px; height:38px; border-radius:11px; background:linear-gradient(135deg,rgba(124,58,237,0.8),rgba(59,130,246,0.8)); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 20px rgba(124,58,237,0.4); font-size:18px; }
+    .nav-logo-text { font-size:19px; font-weight:800; letter-spacing:-0.5px; background:linear-gradient(135deg,#a78bfa,#60a5fa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .nav-logo-sub { font-size:10px; color:var(--t3); letter-spacing:2.5px; text-transform:uppercase; margin-top:1px; }
+    .nav-pills { display:flex; gap:3px; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:14px; padding:5px; }
+    .nav-pill { background:transparent; border:none; color:var(--t2); font-family:'Outfit',sans-serif; font-size:13px; font-weight:500; padding:8px 22px; border-radius:10px; cursor:pointer; transition:all 0.2s; }
+    .nav-pill:hover { color:var(--t1); background:rgba(255,255,255,0.06); }
+    .nav-pill.active { color:#fff; background:linear-gradient(135deg,rgba(124,58,237,0.7),rgba(59,130,246,0.6)); box-shadow:0 2px 14px rgba(124,58,237,0.35); }
+    .nav-right { display:flex; align-items:center; gap:14px; }
+    .live-chip { display:flex; align-items:center; gap:8px; background:rgba(52,211,153,0.08); border:1px solid rgba(52,211,153,0.22); border-radius:20px; padding:6px 16px; font-size:12px; font-weight:600; color:var(--green); }
+    .live-dot { width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); animation:blink 1.5s infinite; }
+    .btn-csv { background:rgba(255,255,255,0.05); border:1px solid var(--border2); color:var(--t2); font-family:'Outfit',sans-serif; font-size:13px; font-weight:500; padding:9px 20px; border-radius:10px; cursor:pointer; transition:all 0.2s; }
+    .btn-csv:hover { background:rgba(255,255,255,0.09); color:var(--t1); }
+
+    /* ── Tabs ── */
+    .tab-content { display:none; }
+    .tab-content.active { display:block; }
+
+    /* ── Dashboard ── */
+    .dash-main { padding:40px 44px; max-width:1400px; margin:0 auto; }
+    .page-hd { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:36px; animation:fadeUp 0.4s ease; }
+    .page-hd-left h1 { font-size:28px; font-weight:800; letter-spacing:-0.8px; margin-bottom:4px; }
+    .page-hd-left p { font-size:13px; color:var(--t3); font-family:'DM Mono',monospace; }
+    .btn-add-node { background:linear-gradient(135deg,#7c3aed,#3b82f6); border:none; color:#fff; font-family:'Outfit',sans-serif; font-size:13px; font-weight:700; padding:11px 24px; border-radius:12px; cursor:pointer; transition:all 0.2s; box-shadow:0 4px 16px rgba(124,58,237,0.4); }
+    .btn-add-node:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(124,58,237,0.5); }
+
+    .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:36px; animation:fadeUp 0.45s ease both; }
+    .stat { background:var(--glass); border:1px solid var(--border); border-radius:18px; padding:24px 26px; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); position:relative; overflow:hidden; transition:all 0.25s; }
+    .stat::before { content:''; position:absolute; top:0;left:0;right:0; height:1px; background:linear-gradient(90deg,transparent,var(--border2),transparent); }
+    .stat:hover { background:var(--glass-h); border-color:var(--border2); transform:translateY(-3px); }
+    .stat-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+    .stat-lbl { font-size:12px; font-weight:600; color:var(--t3); text-transform:uppercase; letter-spacing:1.2px; }
+    .stat-ico { width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+    .ico-p { background:rgba(167,139,250,0.12); }
+    .ico-g { background:rgba(52,211,153,0.12); }
+    .ico-a { background:rgba(251,191,36,0.12); }
+    .ico-r { background:rgba(248,113,113,0.12); }
+    .stat-val { font-size:36px; font-weight:800; letter-spacing:-1.5px; line-height:1; margin-bottom:8px; }
+    .stat-sub { font-size:12px; color:var(--t3); font-family:'DM Mono',monospace; }
+    .c-p { color:var(--purple); }
+    .c-g { color:var(--green); }
+    .c-a { color:var(--amber); }
+    .c-r { color:var(--red); }
+
+    .panel { background:var(--glass); border:1px solid var(--border); border-radius:20px; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); overflow:hidden; animation:fadeUp 0.45s ease 0.12s both; }
+    .panel-head { display:flex; align-items:center; justify-content:space-between; padding:22px 28px; border-bottom:1px solid var(--border); }
+    .panel-head-left h2 { font-size:17px; font-weight:700; letter-spacing:-0.3px; margin-bottom:3px; }
+    .panel-head-left p { font-size:12px; color:var(--t3); font-family:'DM Mono',monospace; }
+    .panel-head-right { display:flex; gap:10px; }
+
+    .table-scroll { overflow-x:auto; }
+    table { width:100%; min-width:760px; border-collapse:collapse; }
+    thead th { font-size:11px; font-weight:700; color:var(--t3); text-transform:uppercase; letter-spacing:1.5px; padding:12px 16px; text-align:left; background:rgba(255,255,255,0.02); border-bottom:1px solid var(--border); white-space:nowrap; }
+    tbody tr { border-bottom:1px solid rgba(255,255,255,0.03); transition:background 0.15s; }
+    tbody tr:hover { background:rgba(255,255,255,0.035); }
+    tbody tr:last-child { border-bottom:none; }
+    td { padding:12px 16px; vertical-align:middle; }
+
+    .node-cell { display:flex; align-items:center; gap:10px; }
+    .node-av { width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; font-weight:700; font-family:'DM Mono',monospace; }
+    .av-1 { background:linear-gradient(135deg,rgba(40,160,240,0.2),rgba(167,139,250,0.15)); border:1px solid rgba(40,160,240,0.25); color:#60c8f0; }
+    .av-2 { background:linear-gradient(135deg,rgba(98,126,234,0.2),rgba(167,139,250,0.15)); border:1px solid rgba(98,126,234,0.25); color:#8fa8f8; }
+    .av-3 { background:linear-gradient(135deg,rgba(243,186,47,0.2),rgba(251,191,36,0.1)); border:1px solid rgba(243,186,47,0.25); color:#f3ba2f; }
+    .av-4 { background:linear-gradient(135deg,rgba(130,71,229,0.2),rgba(167,139,250,0.15)); border:1px solid rgba(130,71,229,0.25); color:#b47af0; }
+    .av-5 { background:linear-gradient(135deg,rgba(52,211,153,0.15),rgba(45,212,191,0.1)); border:1px solid rgba(52,211,153,0.25); color:#34d399; }
+    .node-nm { font-size:13px; font-weight:600; color:var(--t1); margin-bottom:2px; }
+    .node-id { font-size:11px; color:var(--t3); font-family:'DM Mono',monospace; }
+
+    .chain-pill { display:inline-flex; align-items:center; gap:6px; border-radius:20px; padding:4px 11px; font-size:11px; font-weight:500; border:1px solid; white-space:nowrap; }
+    .cp-blue   { background:rgba(96,165,250,0.07);  border-color:rgba(96,165,250,0.18);  color:var(--blue); }
+    .cp-amber  { background:rgba(251,191,36,0.07);  border-color:rgba(251,191,36,0.18);  color:var(--amber); }
+    .cp-red    { background:rgba(248,113,113,0.07); border-color:rgba(248,113,113,0.18); color:var(--red); }
+    .cp-purple { background:rgba(167,139,250,0.07); border-color:rgba(167,139,250,0.18); color:var(--purple); }
+    .cp-teal   { background:rgba(45,212,191,0.07);  border-color:rgba(45,212,191,0.18);  color:var(--teal); }
+    .cdot { width:5px; height:5px; border-radius:50%; background:currentColor; flex-shrink:0; }
+
+    .status-pill { display:inline-flex; align-items:center; gap:6px; border-radius:20px; padding:4px 11px; font-size:11px; font-weight:600; border:1px solid; white-space:nowrap; }
+    .sp-ok  { background:rgba(52,211,153,0.09);  border-color:rgba(52,211,153,0.22);  color:var(--green); }
+    .sp-warn { background:rgba(251,191,36,0.09);  border-color:rgba(251,191,36,0.22);  color:var(--amber); }
+    .sp-err  { background:rgba(248,113,113,0.09); border-color:rgba(248,113,113,0.22); color:var(--red); }
+    .sp-off  { background:rgba(255,255,255,0.04); border-color:rgba(255,255,255,0.1);  color:var(--t3); }
+    .sdot { width:6px; height:6px; border-radius:50%; background:currentColor; animation:blink 1.5s infinite; }
+
+    .mono    { font-family:'DM Mono',monospace; font-size:13px; color:var(--t2); }
+    .mono-sm { font-family:'DM Mono',monospace; font-size:11px; color:var(--t3); }
+
+    .delay-chip { font-family:'DM Mono',monospace; font-size:13px; font-weight:500; padding:3px 10px; border-radius:7px; display:inline-block; }
+    .dc-ok   { background:rgba(52,211,153,0.1);  color:var(--green); }
+    .dc-warn { background:rgba(251,191,36,0.1);  color:var(--amber); }
+    .dc-err  { background:rgba(248,113,113,0.1); color:var(--red); }
+
+    .err-text { font-family:'DM Mono',monospace; font-size:11px; }
+    .act-wrap { display:flex; gap:6px; }
+    .btn-ed { background:rgba(167,139,250,0.08); border:1px solid rgba(167,139,250,0.22); color:var(--purple); font-family:'Outfit',sans-serif; font-size:11px; font-weight:600; padding:6px 13px; border-radius:8px; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+    .btn-ed:hover { background:rgba(167,139,250,0.16); box-shadow:0 0 14px rgba(167,139,250,0.25); }
+    .btn-dl { background:rgba(248,113,113,0.06); border:1px solid rgba(248,113,113,0.18); color:var(--red); font-family:'Outfit',sans-serif; font-size:11px; font-weight:600; padding:6px 13px; border-radius:8px; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+    .btn-dl:hover { background:rgba(248,113,113,0.13); box-shadow:0 0 14px rgba(248,113,113,0.22); }
+
+    /* ── Add Node ── */
+    .addnode-main { display:flex; align-items:flex-start; justify-content:center; padding:48px 24px; min-height:calc(100vh - 68px); }
+    .form-wrap { width:100%; max-width:680px; animation:fadeUp 0.4s ease; }
+    .breadcrumb { display:flex; align-items:center; gap:8px; margin-bottom:28px; font-size:13px; color:var(--t3); font-family:'DM Mono',monospace; }
+    .breadcrumb a { color:var(--t3); text-decoration:none; cursor:pointer; transition:color 0.2s; }
+    .breadcrumb a:hover { color:var(--purple); }
+    .breadcrumb span { color:var(--t2); }
+
+    .form-card { background:var(--glass); border:1px solid var(--border); border-radius:24px; overflow:hidden; backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); position:relative; }
+    .form-card::before { content:''; position:absolute; top:0;left:0;right:0; height:1px; background:linear-gradient(90deg,transparent,var(--border2),transparent); }
+    .form-header { padding:28px 36px 26px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:16px; }
+    .form-header-icon { width:48px; height:48px; border-radius:14px; background:linear-gradient(135deg,rgba(124,58,237,0.25),rgba(59,130,246,0.2)); border:1px solid rgba(167,139,250,0.25); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+    .form-header-text h2 { font-size:20px; font-weight:800; letter-spacing:-0.5px; margin-bottom:4px; }
+    .form-header-text p { font-size:13px; color:var(--t3); }
+    .form-body { padding:32px 36px; }
+
+    .field-row { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+    .field { margin-bottom:22px; }
+    .field:last-child { margin-bottom:0; }
+    .field label { display:block; font-size:12px; font-weight:700; color:var(--t2); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
+    .field label .req { color:var(--purple); margin-left:2px; }
+    .field-hint { font-size:11px; color:var(--t3); margin-top:6px; font-family:'DM Mono',monospace; }
+    .optional-badge { background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--t3); font-size:10px; font-weight:600; padding:2px 8px; border-radius:6px; letter-spacing:0.5px; text-transform:uppercase; vertical-align:middle; margin-left:6px; }
+    .json-field { position:relative; }
+    .json-icon { position:absolute; right:14px; top:13px; font-size:12px; color:var(--t3); font-family:'DM Mono',monospace; pointer-events:none; }
+    .section-divider { display:flex; align-items:center; gap:14px; margin:28px 0 24px; }
+    .section-divider-label { font-size:11px; font-weight:700; color:var(--t3); text-transform:uppercase; letter-spacing:1.5px; white-space:nowrap; }
+    .section-divider-line { flex:1; height:1px; background:var(--border); }
+
+    .form-footer { padding:24px 36px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.01); }
+    .footer-note { font-size:12px; color:var(--t3); display:flex; align-items:center; gap:6px; }
+    .footer-note-dot { width:5px; height:5px; border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green); }
+    .form-footer-btns { display:flex; gap:12px; }
+    .btn-cancel { background:rgba(255,255,255,0.04); border:1px solid var(--border2); color:var(--t2); font-family:'Outfit',sans-serif; font-size:14px; font-weight:600; padding:12px 28px; border-radius:12px; cursor:pointer; transition:all 0.2s; }
+    .btn-cancel:hover { background:rgba(255,255,255,0.08); color:var(--t1); }
+    .btn-submit { background:linear-gradient(135deg,#7c3aed,#3b82f6); border:none; color:#fff; font-family:'Outfit',sans-serif; font-size:14px; font-weight:700; padding:12px 32px; border-radius:12px; cursor:pointer; transition:all 0.2s; box-shadow:0 4px 16px rgba(124,58,237,0.4); }
+    .btn-submit:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(124,58,237,0.5); }
+
+    /* ── Global inputs ── */
+    input[type="text"], input[type="number"], input[type="url"], select, textarea {
+      width:100%; background:var(--input-bg); border:1px solid var(--input-border); border-radius:12px;
+      color:var(--t1); font-family:'DM Mono',monospace; font-size:13px; padding:12px 16px;
+      outline:none; transition:all 0.2s; appearance:none; -webkit-appearance:none;
+    }
+    input::placeholder, textarea::placeholder { color:var(--t3); }
+    input:hover, select:hover, textarea:hover { border-color:rgba(255,255,255,0.18); background:rgba(255,255,255,0.07); }
+    input:focus, select:focus, textarea:focus { border-color:rgba(167,139,250,0.55); background:rgba(167,139,250,0.06); box-shadow:0 0 0 3px rgba(167,139,250,0.12); }
+    select { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(255,255,255,0.35)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 16px center; padding-right:40px; cursor:pointer; }
+    select option { background:#1a1f2e; color:var(--t1); }
+    textarea { resize:vertical; min-height:80px; }
+    .checkbox-field { display:flex; align-items:center; gap:10px; }
+    .checkbox-field input[type="checkbox"] { width:18px; height:18px; border-radius:5px; appearance:auto; -webkit-appearance:auto; padding:0; flex-shrink:0; cursor:pointer; }
+    .checkbox-field label { font-size:13px; color:var(--t2); text-transform:none; letter-spacing:0; font-weight:500; margin-bottom:0; cursor:pointer; }
+
+    /* ── Chains ── */
+    .chains-main { padding:40px 44px; }
+    .chains-page-hd { margin-bottom:32px; animation:fadeUp 0.4s ease; }
+    .chains-page-hd-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:24px; }
+    .chains-page-hd-left { display:flex; align-items:center; gap:16px; }
+    .chains-page-hd-icon { width:48px; height:48px; border-radius:14px; background:linear-gradient(135deg,rgba(45,212,191,0.2),rgba(59,130,246,0.15)); border:1px solid rgba(45,212,191,0.25); display:flex; align-items:center; justify-content:center; font-size:22px; }
+    .chains-page-hd-text h1 { font-size:26px; font-weight:800; letter-spacing:-0.8px; margin-bottom:4px; }
+    .chains-page-hd-text p { font-size:13px; color:var(--t3); }
+    .stats-row { display:flex; gap:12px; align-items:center; }
+    .stat-chip { display:flex; align-items:center; gap:12px; background:var(--glass); border:1px solid var(--border); border-radius:14px; padding:14px 22px; }
+    .stat-chip-val { font-size:24px; font-weight:800; letter-spacing:-0.8px; line-height:1; }
+    .stat-chip-lbl { font-size:11px; color:var(--t3); font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-top:2px; }
+    .sc-total .stat-chip-val { color:var(--purple); }
+    .sc-main  .stat-chip-val { color:var(--blue); }
+    .sc-test  .stat-chip-val { color:var(--teal); }
+    .sc-div { width:1px; height:36px; background:var(--border); }
+
+    .chains-controls { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:28px; animation:fadeUp 0.4s ease 0.05s both; }
+    .search-wrap { position:relative; flex:1; max-width:380px; }
+    .search-wrap svg { position:absolute; left:14px; top:50%; transform:translateY(-50%); width:16px; height:16px; opacity:0.4; pointer-events:none; }
+    input.search-input { width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:12px; color:var(--t1); font-family:'Outfit',sans-serif; font-size:13px; padding:11px 16px 11px 42px; outline:none; transition:all 0.2s; appearance:none; -webkit-appearance:none; }
+    input.search-input::placeholder { color:var(--t3); }
+    input.search-input:focus { border-color:rgba(167,139,250,0.5); background:rgba(167,139,250,0.06); box-shadow:0 0 0 3px rgba(167,139,250,0.1); }
+    .chain-filters { display:flex; gap:6px; }
+    .filter-btn { background:transparent; border:1px solid var(--border); color:var(--t3); font-family:'Outfit',sans-serif; font-size:12px; font-weight:600; padding:9px 18px; border-radius:10px; cursor:pointer; transition:all 0.2s; }
+    .filter-btn:hover { color:var(--t1); background:rgba(255,255,255,0.05); }
+    .filter-btn.active { color:var(--purple); border-color:rgba(167,139,250,0.35); background:rgba(167,139,250,0.08); }
+    .ctrl-actions { display:flex; gap:8px; }
+    .btn-action { background:rgba(255,255,255,0.04); border:1px solid var(--border2); color:var(--t2); font-family:'Outfit',sans-serif; font-size:12px; font-weight:600; padding:9px 16px; border-radius:10px; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; gap:6px; }
+    .btn-action:hover { background:rgba(255,255,255,0.08); color:var(--t1); }
+    .btn-add-chain { background:linear-gradient(135deg,#7c3aed,#3b82f6); border:none; color:#fff; font-family:'Outfit',sans-serif; font-size:13px; font-weight:700; padding:9px 20px; border-radius:10px; cursor:pointer; transition:all 0.2s; box-shadow:0 4px 14px rgba(124,58,237,0.35); display:flex; align-items:center; gap:6px; }
+    .btn-add-chain:hover { transform:translateY(-2px); box-shadow:0 8px 22px rgba(124,58,237,0.5); }
+
+    .chains-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; animation:fadeUp 0.4s ease 0.1s both; }
+    .chain-card { background:var(--glass); border:1px solid var(--border); border-radius:18px; padding:22px 24px; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); transition:all 0.25s; position:relative; overflow:hidden; }
+    .chain-card::before { content:''; position:absolute; top:0;left:0;right:0; height:1px; background:linear-gradient(90deg,transparent,var(--border2),transparent); }
+    .chain-card:hover { background:var(--glass-h); border-color:var(--border2); transform:translateY(-3px); box-shadow:0 12px 36px rgba(0,0,0,0.3); }
+    .chain-card-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:16px; }
+    .chain-card-name { font-size:15px; font-weight:700; letter-spacing:-0.3px; margin-bottom:3px; }
+    .chain-card-sym { font-size:11px; color:var(--t3); font-family:'DM Mono',monospace; }
+    .type-badge { display:inline-block; font-size:10px; font-weight:700; padding:3px 10px; border-radius:8px; text-transform:uppercase; letter-spacing:0.8px; flex-shrink:0; }
+    .badge-main { background:rgba(52,211,153,0.1);  color:var(--green); border:1px solid rgba(52,211,153,0.22); }
+    .badge-test { background:rgba(251,191,36,0.1);  color:var(--amber); border:1px solid rgba(251,191,36,0.22); }
+    .chain-divider { height:1px; background:var(--border); margin:14px 0; }
+    .chain-details { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:18px; }
+    .chain-detail-row { display:flex; flex-direction:column; gap:2px; }
+    .cd-label { font-size:10px; color:var(--t3); font-weight:600; text-transform:uppercase; letter-spacing:0.8px; }
+    .cd-value { font-size:12px; font-family:'DM Mono',monospace; color:var(--t2); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .cd-value.highlight { color:var(--purple); }
+    .chain-desc { font-size:11px; color:var(--t3); font-family:'DM Mono',monospace; margin-bottom:18px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:8px 12px; background:rgba(255,255,255,0.02); border-radius:8px; border:1px solid var(--border); }
+    .chain-card-actions { display:flex; gap:8px; }
+    .btn-ce { flex:1; background:rgba(167,139,250,0.08); border:1px solid rgba(167,139,250,0.22); color:var(--purple); font-family:'Outfit',sans-serif; font-size:12px; font-weight:600; padding:9px; border-radius:10px; cursor:pointer; transition:all 0.2s; text-align:center; }
+    .btn-ce:hover { background:rgba(167,139,250,0.15); box-shadow:0 0 14px rgba(167,139,250,0.2); }
+    .btn-cd { flex:1; background:rgba(248,113,113,0.06); border:1px solid rgba(248,113,113,0.18); color:var(--red); font-family:'Outfit',sans-serif; font-size:12px; font-weight:600; padding:9px; border-radius:10px; cursor:pointer; transition:all 0.2s; text-align:center; }
+    .btn-cd:hover { background:rgba(248,113,113,0.13); box-shadow:0 0 14px rgba(248,113,113,0.2); }
+    .no-chains { text-align:center; padding:60px 20px; color:var(--t3); grid-column:1/-1; }
+    .no-chains h4 { font-size:16px; font-weight:600; color:var(--t2); margin-bottom:8px; }
+    .no-chains p { font-size:13px; font-family:'DM Mono',monospace; }
+    .loading-spinner { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px; color:var(--t3); }
+    .spinner { width:36px; height:36px; border:3px solid rgba(255,255,255,0.08); border-top:3px solid var(--purple); border-radius:50%; animation:spin 0.8s linear infinite; margin-bottom:16px; }
+
+    /* ── Modals ── */
+    .modal-overlay { position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.72); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; padding:24px; }
+    .modal-card { background:rgba(11,14,22,0.97); border:1px solid var(--border2); border-radius:24px; width:100%; max-width:700px; max-height:90vh; overflow-y:auto; position:relative; box-shadow:0 24px 80px rgba(0,0,0,0.6); }
+    .modal-card::before { content:''; position:absolute; top:0;left:0;right:0; height:1px; background:linear-gradient(90deg,transparent,rgba(167,139,250,0.4),transparent); border-radius:24px 24px 0 0; pointer-events:none; }
+    .modal-header { padding:28px 32px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+    .modal-header h3 { font-size:18px; font-weight:800; letter-spacing:-0.4px; }
+    .modal-close { background:rgba(255,255,255,0.06); border:1px solid var(--border); color:var(--t2); width:32px; height:32px; border-radius:8px; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; transition:all 0.2s; flex-shrink:0; }
+    .modal-close:hover { background:rgba(255,255,255,0.1); color:var(--t1); }
+    .modal-body { padding:28px 32px 32px; }
+    .modal-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+    .modal-field { display:flex; flex-direction:column; gap:8px; }
+    .modal-field.span-2 { grid-column:span 2; }
+    .modal-field label { font-size:12px; font-weight:700; color:var(--t2); text-transform:uppercase; letter-spacing:1px; }
+    .modal-field label .req { color:var(--purple); margin-left:2px; }
+    .modal-footer { display:flex; justify-content:flex-end; gap:12px; padding-top:24px; margin-top:24px; border-top:1px solid var(--border); }
+    .btn-modal-cancel { background:rgba(255,255,255,0.04); border:1px solid var(--border2); color:var(--t2); font-family:'Outfit',sans-serif; font-size:13px; font-weight:600; padding:11px 24px; border-radius:12px; cursor:pointer; transition:all 0.2s; }
+    .btn-modal-cancel:hover { background:rgba(255,255,255,0.08); color:var(--t1); }
+    .btn-modal-submit { background:linear-gradient(135deg,#7c3aed,#3b82f6); border:none; color:#fff; font-family:'Outfit',sans-serif; font-size:13px; font-weight:700; padding:11px 28px; border-radius:12px; cursor:pointer; transition:all 0.2s; box-shadow:0 4px 14px rgba(124,58,237,0.35); }
+    .btn-modal-submit:hover { transform:translateY(-2px); box-shadow:0 8px 22px rgba(124,58,237,0.5); }
+
+    /* ── Animations ── */
+    @keyframes blink   { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    @keyframes spin    { to{transform:rotate(360deg)} }
+    @keyframes fadeUp  { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
   </style>
 </head>
 <body>
+<div class="glow1"></div><div class="glow2"></div><div class="glow3"></div>
+<div class="app">
 
-  <div class="tabs">
-    <div class="tab-buttons">
-      <button class="tab-button active" onclick="switchTab('dashboard')">Dashboard</button>
-      <button class="tab-button" id="addNodeBtn" onclick="switchTab('addNode')">Add Node</button>
-      <button class="tab-button" onclick="switchTab('chains')">Chains</button>
+<!-- ── NAV ── -->
+<nav>
+  <div class="nav-logo">
+    <div class="nav-logo-mark">⬡</div>
+    <div>
+      <div class="nav-logo-text">NodeSync</div>
+      <div class="nav-logo-sub">Blockchain Monitor</div>
     </div>
-    <button class="save-csv" id="exportBtn">Export to CSV</button>
   </div>
-
-  <div id="dashboard" class="tab-content active">
-    <table id="statusTable">
-      <thead>
-        <tr>
-          <th>Node Name</th>
-          <th>Chain</th>
-          <th>Status</th>
-          <th>Local Height</th>
-          <th>Remote Height</th>
-          <th>Delay</th>
-          <th>Last Checked</th>
-          <th>Error</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+  <div class="nav-pills">
+    <button class="nav-pill active" onclick="switchTab('dashboard')">Dashboard</button>
+    <button class="nav-pill" onclick="switchTab('addNode')">Add Node</button>
+    <button class="nav-pill" onclick="switchTab('chains')">Chains</button>
   </div>
+  <div class="nav-right">
+    <div class="live-chip"><div class="live-dot"></div>Live</div>
+    <button class="btn-csv" id="exportBtn">↓ Export CSV</button>
+  </div>
+</nav>
 
-  <div id="addNode" class="tab-content">
-    <div class="form-cards">
-      <form id="nodeForm">
-        <div class="form-groups">
-          <label for="name">Node Name</label>
-          <input type="text" id="name" required />
+<!-- ── DASHBOARD TAB ── -->
+<div id="dashboard" class="tab-content active">
+  <div class="dash-main">
+    <div class="page-hd">
+      <div class="page-hd-left">
+        <h1>Dashboard</h1>
+        <p id="dashSubtitle">node-sync / overview</p>
+      </div>
+      <button class="btn-add-node" onclick="switchTab('addNode')">+ Add Node</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-top"><span class="stat-lbl">Total Nodes</span><div class="stat-ico ico-p">🔷</div></div>
+        <div class="stat-val c-p" id="statTotal">0</div>
+        <div class="stat-sub">monitored endpoints</div>
+      </div>
+      <div class="stat">
+        <div class="stat-top"><span class="stat-lbl">Healthy</span><div class="stat-ico ico-g">✦</div></div>
+        <div class="stat-val c-g" id="statHealthy">0</div>
+        <div class="stat-sub">in sync</div>
+      </div>
+      <div class="stat">
+        <div class="stat-top"><span class="stat-lbl">Warnings</span><div class="stat-ico ico-a">⚡</div></div>
+        <div class="stat-val c-a" id="statWarning">0</div>
+        <div class="stat-sub">degrading or delayed</div>
+      </div>
+      <div class="stat">
+        <div class="stat-top"><span class="stat-lbl">Errors</span><div class="stat-ico ico-r">⚠</div></div>
+        <div class="stat-val c-r" id="statError">0</div>
+        <div class="stat-sub">offline or out of sync</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-head-left">
+          <h2>Node Overview</h2>
+          <p id="panelSubtitle">Loading nodes...</p>
+        </div>
+        <div class="panel-head-right">
+          <button class="btn-add-node" style="padding:9px 18px;font-size:12px;border-radius:10px" onclick="switchTab('addNode')">+ Add Node</button>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table id="statusTable">
+          <thead>
+            <tr>
+              <th>Node</th><th>Chain</th><th>Status</th><th>Local Height</th>
+              <th>Remote Height</th><th>Delay</th><th>Last Checked</th><th>Error</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ADD NODE TAB ── -->
+<div id="addNode" class="tab-content">
+  <div class="addnode-main">
+    <div class="form-wrap">
+      <div class="breadcrumb">
+        <a onclick="switchTab('dashboard')">Dashboard</a>
+        <span>›</span>
+        <span style="color:var(--purple)">Add Node</span>
+      </div>
+
+      <div class="form-card">
+        <div class="form-header">
+          <div class="form-header-icon">⊕</div>
+          <div class="form-header-text">
+            <h2>Add New Node</h2>
+            <p>Connect a blockchain node to start monitoring</p>
+          </div>
         </div>
 
-        <div class="form-groups">
-          <label for="chainSelect">Blockchain Network</label>
-          <select id="chainSelect" onchange="onChainSelect()" required>
-            <option value="">Select a chain...</option>
-          </select>
-        </div>
+        <form id="nodeForm">
+          <div class="form-body">
+            <div class="field-row">
+              <div class="field">
+                <label for="name">Node Name <span class="req">*</span></label>
+                <input type="text" id="name" placeholder="e.g. My Arbitrum Node" required />
+                <div class="field-hint">Unique name to identify this node</div>
+              </div>
+              <div class="field">
+                <label for="chainSelect">Blockchain Network <span class="req">*</span></label>
+                <select id="chainSelect" onchange="onChainSelect()" required>
+                  <option value="">Select a chain...</option>
+                </select>
+                <div class="field-hint">Select the blockchain network</div>
+              </div>
+            </div>
 
-        <div class="form-groups">
-          <label for="local">Local URL</label>
-          <input type="text" id="local" required />
-        </div>
+            <div class="field">
+              <label for="local">Local RPC URL <span class="req">*</span></label>
+              <input type="text" id="local" placeholder="http://localhost:8545 or https://your-node.com/rpc" required />
+              <div class="field-hint">Your local or private node endpoint</div>
+            </div>
 
-        <div class="form-groups">
-          <label for="remote">Remote URL</label>
-          <input type="text" id="remote" required />
-        </div>
+            <div class="field">
+              <label for="remote">Remote URL <span class="req">*</span></label>
+              <select id="remote" onchange="onRemoteSelectChange(this, 'remoteCustom')" disabled>
+                <option value="" disabled selected>Select a chain first...</option>
+              </select>
+              <input type="text" id="remoteCustom" placeholder="Enter custom RPC URL..." style="display:none;margin-top:8px" />
+              <div class="field-hint">Public endpoint for remote block comparison</div>
+            </div>
 
-        <div class="form-groups">
-          <label for="httpMethod">HTTP Method</label>
-          <select id="httpMethod">
-            <option value="POST" selected>POST</option>
-            <option value="GET">GET</option>
-          </select>
-        </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="httpMethod">HTTP Method <span class="req">*</span></label>
+                <select id="httpMethod">
+                  <option value="POST" selected>POST</option>
+                  <option value="GET">GET</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="rpcMethod">RPC Method <span class="optional-badge">Optional</span></label>
+                <input type="text" id="rpcMethod" placeholder="Leave empty to use chain default" />
+                <div class="field-hint">e.g. eth_blockNumber</div>
+              </div>
+            </div>
 
-        <div class="form-groups">
-          <label for="rpcMethod">RPC Method (Custom)</label>
-          <input type="text" id="rpcMethod" placeholder="Leave empty to use chain default" />
-        </div>
+            <div class="section-divider">
+              <div class="section-divider-line"></div>
+              <div class="section-divider-label">Advanced Config</div>
+              <div class="section-divider-line"></div>
+            </div>
 
-        <div class="form-groups">
-          <label for="params">Params (JSON array)</label>
-          <input type="text" id="params" placeholder='e.g. ["latest"]' />
-        </div>
+            <div class="field json-field">
+              <label for="params">Params <span class="optional-badge">JSON Array</span></label>
+              <input type="text" id="params" placeholder='e.g. ["latest"]' />
+              <div class="field-hint">Request parameters passed to the RPC method</div>
+            </div>
 
-        <div class="form-groups">
-          <label for="headers">Headers (JSON)</label>
-          <input type="text" id="headers" placeholder='e.g. {"Authorization":"Bearer ..."}' />
-        </div>
+            <div class="field json-field">
+              <label for="headers">Headers <span class="optional-badge">JSON</span></label>
+              <input type="text" id="headers" placeholder='e.g. {"Authorization":"Bearer ..."}' />
+              <div class="field-hint">Custom HTTP headers for authenticated endpoints</div>
+            </div>
 
-        <div class="form-groups">
-          <label for="responsePath">Response Path</label>
-          <input type="text" id="responsePath" placeholder='e.g. result.header.height' />
-        </div>
+            <div class="field">
+              <label for="responsePath">Response Path <span class="optional-badge">Optional</span></label>
+              <input type="text" id="responsePath" placeholder="e.g. result.header.height" />
+              <div class="field-hint">Dot-notation path to extract block height from response</div>
+            </div>
+          </div>
 
-        <div class="form-buttons">
-          <button id="nodeSubmitBtn" type="submit" class="btn-primary">Add Node</button>
-          <button id="nodeCancelBtn" type="button" class="btn-close">Cancel</button>
+          <div class="form-footer">
+            <div class="footer-note">
+              <div class="footer-note-dot"></div>
+              Node will begin monitoring immediately after saving
+            </div>
+            <div class="form-footer-btns">
+              <button type="button" class="btn-cancel" id="nodeCancelBtn" onclick="switchTab('dashboard')">Cancel</button>
+              <button type="submit" class="btn-submit" id="nodeSubmitBtn">⊕ Add Node</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── CHAINS TAB ── -->
+<div id="chains" class="tab-content">
+  <div class="chains-main">
+    <div class="chains-page-hd">
+      <div class="chains-page-hd-top">
+        <div class="chains-page-hd-left">
+          <div class="chains-page-hd-icon">◈</div>
+          <div class="chains-page-hd-text">
+            <h1>Blockchain Networks</h1>
+            <p>Manage supported blockchain networks and their configurations</p>
+          </div>
+        </div>
+        <div class="stats-row">
+          <div class="stat-chip sc-total">
+            <div><div class="stat-chip-val" id="totalChains">0</div><div class="stat-chip-lbl">Total</div></div>
+          </div>
+          <div class="sc-div"></div>
+          <div class="stat-chip sc-main">
+            <div><div class="stat-chip-val" id="mainnetChains">0</div><div class="stat-chip-lbl">Mainnet</div></div>
+          </div>
+          <div class="sc-div"></div>
+          <div class="stat-chip sc-test">
+            <div><div class="stat-chip-val" id="testnetChains">0</div><div class="stat-chip-lbl">Testnet</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chains-controls">
+      <div style="display:flex;gap:16px;align-items:center;flex:1">
+        <div class="search-wrap">
+          <svg viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="white" stroke-width="1.5"/><path d="M11 11l3 3" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <input type="text" id="chainSearch" class="search-input" placeholder="Search chains..." oninput="filterChains()" />
+        </div>
+        <div class="chain-filters">
+          <button class="filter-btn active" onclick="setFilter('all')">All</button>
+          <button class="filter-btn" onclick="setFilter('mainnet')">Mainnet</button>
+          <button class="filter-btn" onclick="setFilter('testnet')">Testnet</button>
+        </div>
+      </div>
+      <div class="ctrl-actions">
+        <button class="btn-action" id="updateBtn" onclick="fetchStatus()">↻ Fetch Latest Chain</button>
+        <button class="btn-action" onclick="refreshChains()">⟳ Refresh</button>
+        <button class="btn-add-chain" onclick="showAddChainForm()">+ Add Chain</button>
+      </div>
+    </div>
+
+    <div style="position:relative;min-height:200px">
+      <div class="loading-spinner" id="chainsLoading" style="display:none;">
+        <div class="spinner"></div>
+        <p>Loading chains...</p>
+      </div>
+      <div class="chains-grid" id="chainsGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── EDIT NODE MODAL ── -->
+<div id="editNodeModal" class="modal-overlay" style="display:none;">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 id="editNodeTitle">Edit Node</h3>
+      <button class="modal-close" onclick="hideEditNodeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="editNodeForm">
+        <div class="modal-grid">
+          <div class="modal-field">
+            <label for="editName">Node Name <span class="req">*</span></label>
+            <input type="text" id="editName" required />
+          </div>
+          <div class="modal-field">
+            <label for="editChainSelect">Blockchain Network <span class="req">*</span></label>
+            <select id="editChainSelect" required onchange="onEditChainSelect()">
+              <option value="">Select a chain...</option>
+            </select>
+          </div>
+          <div class="modal-field">
+            <label for="editLocal">Local URL <span class="req">*</span></label>
+            <input type="text" id="editLocal" required />
+          </div>
+          <div class="modal-field">
+            <label for="editRemote">Remote URL <span class="req">*</span></label>
+            <select id="editRemote" onchange="onRemoteSelectChange(this, 'editRemoteCustom')">
+              <option value="" disabled selected>Select a chain...</option>
+            </select>
+            <input type="text" id="editRemoteCustom" placeholder="Enter custom RPC URL..." style="display:none;margin-top:8px" />
+          </div>
+          <div class="modal-field">
+            <label for="editHttpMethod">HTTP Method</label>
+            <select id="editHttpMethod">
+              <option value="POST">POST</option>
+              <option value="GET">GET</option>
+            </select>
+          </div>
+          <div class="modal-field">
+            <label for="editRpcMethod">RPC Method <span class="optional-badge">Optional</span></label>
+            <input type="text" id="editRpcMethod" placeholder="Leave empty to use chain default" />
+          </div>
+          <div class="modal-field">
+            <label for="editParams">Params (JSON array)</label>
+            <input type="text" id="editParams" placeholder='e.g. ["latest"]' />
+          </div>
+          <div class="modal-field">
+            <label for="editHeaders">Headers (JSON)</label>
+            <input type="text" id="editHeaders" placeholder='e.g. {"Authorization":"Bearer ..."}' />
+          </div>
+          <div class="modal-field span-2">
+            <label for="editResponsePath">Response Path</label>
+            <input type="text" id="editResponsePath" placeholder="e.g. result.header.height" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-modal-cancel" onclick="hideEditNodeModal()">Cancel</button>
+          <button type="submit" class="btn-modal-submit" id="editNodeSubmitBtn">Update Node</button>
         </div>
       </form>
     </div>
   </div>
+</div>
 
-  <div id="chains" class="tab-content">
-    <div class="form-card">
-      <div class="chains-header">
-        <div class="chains-title">
-          <h3>🔗 Blockchain Networks</h3>
-          <p>Manage blockchain network configurations and their default settings</p>
-        </div>
-        <div class="chains-stats" id="chainsStats">
-          <div class="stat-item">
-            <span class="stat-number" id="totalChains">0</span>
-            <span class="stat-label">Total Chains</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number" id="mainnetChains">0</span>
-            <span class="stat-label">Mainnets</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number" id="testnetChains">0</span>
-            <span class="stat-label">Testnets</span>
-          </div>
-        </div>
-      </div>
-      
-      <div class="chains-controls">
-        <div class="search-box">
-          <input type="text" id="chainSearch" placeholder="🔍 Search chains..." />
-          <button onclick="clearSearch()" class="clear-search">✕</button>
-        </div>
-        <div class="filter-buttons">
-          <button class="filter-btn active" onclick="filterChains('all')">All</button>
-          <button class="filter-btn" onclick="filterChains('mainnet')">Mainnet</button>
-          <button class="filter-btn" onclick="filterChains('testnet')">Testnet</button>
-        </div>
-        <div class="action-buttons">
-          <button onclick="refreshChains()" class="btn-secondary">
-            <span class="btn-icon">🔄</span>
-            <span class="btn-text">Refresh</span>
-          </button>
-          <button onclick="showAddChainForm()" class="btn-primary">
-            <span class="btn-icon">➕</span>
-            <span class="btn-text">Add Chain</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="chains-container">
-        <div class="loading-spinner" id="chainsLoading" style="display: none;">
-          <div class="spinner"></div>
-          <p>Loading chains...</p>
-        </div>
-        
-        <div class="chains-grid" id="chainsGrid">
-          <!-- Chains will be populated here -->
-        </div>
-        
-        <div class="no-chains" id="noChains" style="display: none;">
-          <div class="no-chains-icon">🔗</div>
-          <h4>No chains found</h4>
-          <p>Try adjusting your search or add a new chain</p>
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Add/Edit Chain Form Modal -->
-  <div id="chainFormCard" class="form-card chain-form-modal" style="display: none;">
-    <div class="form-header">
+<!-- ── ADD / EDIT CHAIN MODAL ── -->
+<div id="chainFormCard" class="modal-overlay" style="display:none;">
+  <div class="modal-card">
+    <div class="modal-header">
       <h3 id="chainFormTitle">Add Custom Chain</h3>
-      <button onclick="hideChainForm()" class="close-btn">✕</button>
+      <button class="modal-close" onclick="hideChainForm()">✕</button>
     </div>
-    
-    <form id="chainForm" class="chain-form">
-      <div class="form-row">
-        <div class="form-group">
-          <label for="chainName">Chain Name</label>
-          <input type="text" id="chainName" required placeholder="e.g. Ethereum Mainnet" />
+    <div class="modal-body">
+      <form id="chainForm">
+        <div class="modal-grid">
+          <div class="modal-field">
+            <label for="chainName">Chain Name <span class="req">*</span></label>
+            <input type="text" id="chainName" required placeholder="e.g. Ethereum Mainnet" />
+          </div>
+          <div class="modal-field">
+            <label for="chainSymbol">Symbol <span class="req">*</span></label>
+            <input type="text" id="chainSymbol" required placeholder="e.g. ETH" />
+          </div>
+          <div class="modal-field">
+            <label for="chainId">Chain ID</label>
+            <input type="number" id="chainId" placeholder="e.g. 1" />
+          </div>
+          <div class="modal-field">
+            <label for="chainBlockTime">Block Time (seconds)</label>
+            <input type="number" id="chainBlockTime" step="0.1" placeholder="15" />
+          </div>
+          <div class="modal-field">
+            <label for="chainRpcMethod">RPC Method <span class="req">*</span></label>
+            <input type="text" id="chainRpcMethod" required placeholder="e.g. eth_blockNumber" />
+          </div>
+          <div class="modal-field">
+            <label for="chainHttpMethod">HTTP Method</label>
+            <select id="chainHttpMethod">
+              <option value="POST" selected>POST</option>
+              <option value="GET">GET</option>
+            </select>
+          </div>
+          <div class="modal-field">
+            <label for="chainDefaultParams">Default Params (JSON)</label>
+            <input type="text" id="chainDefaultParams" placeholder="e.g. []" />
+          </div>
+          <div class="modal-field">
+            <label for="chainResponsePath">Response Path</label>
+            <input type="text" id="chainResponsePath" placeholder="e.g. result" />
+          </div>
+          <div class="modal-field">
+            <label for="chainDescription">Description</label>
+            <input type="text" id="chainDescription" placeholder="Brief description of the chain" />
+          </div>
+          <div class="modal-field">
+            <label for="chainExplorer">Explorer URL</label>
+            <input type="url" id="chainExplorer" placeholder="https://etherscan.io" />
+          </div>
+          <div class="modal-field span-2">
+            <label for="chainRpcUrls">RPC URLs (one per line)</label>
+            <textarea id="chainRpcUrls" rows="3" placeholder="https://eth.llamarpc.com&#10;https://ethereum-rpc.publicnode.com"></textarea>
+          </div>
+          <div class="modal-field span-2">
+            <div class="checkbox-field">
+              <input type="checkbox" id="chainIsTestnet" />
+              <label for="chainIsTestnet">This is a testnet</label>
+            </div>
+          </div>
         </div>
-        <div class="form-group">
-          <label for="chainSymbol">Symbol</label>
-          <input type="text" id="chainSymbol" required placeholder="e.g. ETH" />
+        <div class="modal-footer">
+          <button type="button" class="btn-modal-cancel" onclick="hideChainForm()">Cancel</button>
+          <button type="submit" class="btn-modal-submit" id="chainSubmitBtn">Add Chain</button>
         </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label for="chainId">Chain ID</label>
-          <input type="number" id="chainId" placeholder="e.g. 1" />
-        </div>
-        <div class="form-group">
-          <label for="chainBlockTime">Block Time (seconds)</label>
-          <input type="number" id="chainBlockTime" step="0.1" placeholder="15" />
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label for="chainRpcMethod">RPC Method</label>
-          <input type="text" id="chainRpcMethod" placeholder="e.g. eth_blockNumber" required />
-        </div>
-        <div class="form-group">
-          <label for="chainHttpMethod">HTTP Method</label>
-          <select id="chainHttpMethod">
-            <option value="POST" selected>POST</option>
-            <option value="GET">GET</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label for="chainDefaultParams">Default Params (JSON)</label>
-          <input type="text" id="chainDefaultParams" placeholder='e.g. []' />
-        </div>
-        <div class="form-group">
-          <label for="chainResponsePath">Response Path</label>
-          <input type="text" id="chainResponsePath" placeholder="e.g. result" />
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label for="chainDescription">Description</label>
-        <input type="text" id="chainDescription" placeholder="Brief description of the chain" />
-      </div>
-
-      <div class="form-group">
-        <label for="chainExplorer">Explorer URL</label>
-        <input type="url" id="chainExplorer" placeholder="https://etherscan.io" />
-      </div>
-
-      <div class="form-group">
-        <label for="chainRpcUrls">RPC URLs (one per line)</label>
-        <textarea id="chainRpcUrls" rows="3" placeholder="https://eth.llamarpc.com&#10;https://ethereum-rpc.publicnode.com"></textarea>
-      </div>
-
-      <div class="form-group checkbox-group">
-        <label class="checkbox-label">
-          <input type="checkbox" id="chainIsTestnet" />
-          <span class="checkbox-custom"></span>
-          This is a testnet
-        </label>
-      </div>
-
-      <div class="form-actions">
-        <button type="button" onclick="hideChainForm()" class="btn-secondary">Cancel</button>
-        <button type="submit" id="chainSubmitBtn" class="btn-primary">
-          <span class="btn-icon">➕</span>
-          <span class="btn-text">Add Chain</span>
-        </button>
-      </div>
-    </form>
-  </div>
-
-  <script>
-    function switchTab(tabId) {
-      document.querySelectorAll(".tab-button").forEach(btn => btn.classList.remove("active"));
-      document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
-      document.querySelector(`[onclick="switchTab('${tabId}')"]`).classList.add("active");
-      document.getElementById(tabId).classList.add("active");
-    }
-  </script>
-  <script src="frontend.js"></script>
-
-  <!-- Edit Node Modal -->
-  <div id="editNodeModal" class="form-card chain-form-modal" style="display: none;">
-    <div class="form-header">
-      <h3 id="editNodeTitle">Edit Node</h3>
-      <button onclick="hideEditNodeModal()" class="close-btn">✕</button>
+      </form>
     </div>
-    <form id="editNodeForm" class="chain-form">
-      <div class="form-group">
-        <label for="editName">Node Name</label>
-        <input type="text" id="editName" required />
-      </div>
-
-      <div class="form-group">
-        <label for="editChainSelect">Blockchain Network</label>
-        <select id="editChainSelect" required onchange="onEditChainSelect()">
-          <option value="">Select a chain...</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label for="editLocal">Local URL</label>
-        <input type="text" id="editLocal" required />
-      </div>
-
-      <div class="form-group">
-        <label for="editRemote">Remote URL</label>
-        <input type="text" id="editRemote" required />
-      </div>
-
-      <div class="form-group">
-        <label for="editHttpMethod">HTTP Method</label>
-        <select id="editHttpMethod">
-          <option value="POST">POST</option>
-          <option value="GET">GET</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label for="editRpcMethod">RPC Method (Custom)</label>
-        <input type="text" id="editRpcMethod" placeholder="Leave empty to use chain default" />
-      </div>
-
-      <div class="form-group">
-        <label for="editParams">Params (JSON array)</label>
-        <input type="text" id="editParams" placeholder='e.g. ["latest"]' />
-      </div>
-
-      <div class="form-group">
-        <label for="editHeaders">Headers (JSON)</label>
-        <input type="text" id="editHeaders" placeholder='e.g. {"Authorization":"Bearer ..."}' />
-      </div>
-
-      <div class="form-group1">
-        <label for="editResponsePath">Response Path</label>
-        <input type="text" id="editResponsePath" placeholder='e.g. result.header.height' />
-      </div>
-
-      <div class="form-actions">
-        <button type="button" onclick="hideEditNodeModal()" class="btn-close">Cancel</button>
-        <button type="submit" id="editNodeSubmitBtn" class="btn-primary"><span class="btn-text">Update Node</span></button>
-      </div>
-    </form>
   </div>
+</div>
+
+<script>
+  function switchTab(tabId) {
+    document.querySelectorAll('.nav-pill').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelector(`.nav-pill[onclick="switchTab('${tabId}')"]`).classList.add('active');
+    document.getElementById(tabId).classList.add('active');
+  }
+</script>
+<script src="frontend.js"></script>
 </body>
 </html>
