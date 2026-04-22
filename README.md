@@ -34,9 +34,14 @@ git clone <repository-url>
 cd node-sync
 ```
 
-2. Start the application:
+2. Create db file:
 ```bash
-docker-compose up -d
+cp sync_checker.db.example sync_checker.db
+```
+
+3. Start the application:
+```bash
+docker-compose up --build -d
 ```
 
 3. Open your browser and navigate to `http://localhost:3000`
