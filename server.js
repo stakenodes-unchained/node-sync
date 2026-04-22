@@ -79,8 +79,12 @@ app.get("/status", async (_req, res) => {
 
       const fetchHeight = async (url) => {
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
+
           const options = {
             method: httpMethod,
+            signal: controller.signal,
             headers: {
               "Content-Type": "application/json",
               ...headers,
@@ -97,6 +101,7 @@ app.get("/status", async (_req, res) => {
           }
 
           const response = await fetch(url, options);
+          clearTimeout(timeoutId);
           const contentType = response.headers.get("content-type") || "";
           const text = await response.text();
 
@@ -108,6 +113,7 @@ app.get("/status", async (_req, res) => {
           const value = responsePath.split(".").reduce((o, k) => o?.[k], data);
           return parseInt(value, 16);
         } catch (err) {
+          if (err.name === 'AbortError') throw new Error('Request timed out after 10s');
           throw new Error(err.message);
         }
       };

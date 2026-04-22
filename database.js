@@ -71,6 +71,13 @@ class DatabaseManager {
       )
     `);
 
+    // Migration: add check_interval column to existing nodes tables
+    try {
+      this.db.exec('ALTER TABLE nodes ADD COLUMN check_interval INTEGER DEFAULT 60');
+    } catch (e) {
+      if (!e.message.includes('duplicate column name')) throw e;
+    }
+
     // Create indexes for better performance
     this.db.exec(`
       CREATE INDEX IF NOT EXISTS idx_nodes_chain_id ON nodes(chain_id);
@@ -191,11 +198,11 @@ class DatabaseManager {
   // Node management methods
   addNode(nodeData) {
     const stmt = this.db.prepare(`
-      INSERT INTO nodes (name, chain_id, local_url, remote_url, custom_method, custom_params, 
-                        custom_headers, custom_response_path, custom_http_method)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO nodes (name, chain_id, local_url, remote_url, custom_method, custom_params,
+                        custom_headers, custom_response_path, custom_http_method, check_interval)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    
+
     return stmt.run(
       nodeData.name,
       nodeData.chain_id,
@@ -205,7 +212,8 @@ class DatabaseManager {
       nodeData.custom_params || '[]',
       nodeData.custom_headers || '{}',
       nodeData.custom_response_path || null,
-      nodeData.custom_http_method || null
+      nodeData.custom_http_method || null,
+      nodeData.check_interval ? Number(nodeData.check_interval) : 60
     );
   }
 
@@ -234,13 +242,13 @@ class DatabaseManager {
 
   updateNode(id, nodeData) {
     const stmt = this.db.prepare(`
-      UPDATE nodes 
-      SET name = ?, chain_id = ?, local_url = ?, remote_url = ?, custom_method = ?, 
-          custom_params = ?, custom_headers = ?, custom_response_path = ?, 
-          custom_http_method = ?, updated_at = CURRENT_TIMESTAMP
+      UPDATE nodes
+      SET name = ?, chain_id = ?, local_url = ?, remote_url = ?, custom_method = ?,
+          custom_params = ?, custom_headers = ?, custom_response_path = ?,
+          custom_http_method = ?, check_interval = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `);
-    
+
     return stmt.run(
       nodeData.name,
       nodeData.chain_id,
@@ -251,6 +259,7 @@ class DatabaseManager {
       nodeData.custom_headers || '{}',
       nodeData.custom_response_path || null,
       nodeData.custom_http_method || null,
+      nodeData.check_interval ? Number(nodeData.check_interval) : 60,
       id
     );
   }
