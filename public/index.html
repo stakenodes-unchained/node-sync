@@ -514,7 +514,8 @@
         </div>
       </div>
       <div class="ctrl-actions">
-        <button class="btn-action" id="updateBtn" onclick="fetchStatus()">↻ Fetch Latest Chain</button>
+        <span id="chainsLastSync" class="mono-sm" style="display:flex;align-items:center;padding:0 8px;">Last sync: Never</span>
+        <button class="btn-action" id="updateBtn" onclick="updateChainsFromChainlist()">↻ Fetch Latest Chains</button>
         <button class="btn-action" onclick="refreshChains()">⟳ Refresh</button>
         <button class="btn-add-chain" onclick="showAddChainForm()">+ Add Chain</button>
       </div>

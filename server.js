@@ -248,6 +248,102 @@ app.get("/chains", (req, res) => {
   }
 });
 
+// POST /chains/sync - Fetch chains from Chainlist and upsert in DB
+app.post("/chains/sync", async (_req, res) => {
+  try {
+    const response = await fetch("https://chainid.network/chains.json");
+    if (!response.ok) {
+      throw new Error(`Chainlist request failed with ${response.status}`);
+    }
+
+    const chainlist = await response.json();
+    if (!Array.isArray(chainlist)) {
+      throw new Error("Invalid Chainlist payload");
+    }
+
+    const existingChains = db.getAllChains();
+    const byChainId = new Map(
+      existingChains
+        .filter((c) => c.chain_id !== null && c.chain_id !== undefined)
+        .map((c) => [Number(c.chain_id), c])
+    );
+    const byName = new Map(
+      existingChains.map((c) => [String(c.name || "").toLowerCase(), c])
+    );
+
+    let added = 0;
+    let updated = 0;
+    let skipped = 0;
+
+    for (const chain of chainlist) {
+      const name = String(chain?.name || "").trim();
+      const symbol = String(chain?.nativeCurrency?.symbol || "").trim();
+      const chainId = Number(chain?.chainId);
+      const rpcUrls = Array.isArray(chain?.rpc)
+        ? chain.rpc.filter(
+            (url) =>
+              typeof url === "string" &&
+              url.startsWith("http") &&
+              !url.includes("${")
+          )
+        : [];
+
+      if (!name || !symbol || !Number.isFinite(chainId) || rpcUrls.length === 0) {
+        skipped += 1;
+        continue;
+      }
+
+      const firstExplorer = Array.isArray(chain?.explorers) && chain.explorers.length > 0
+        ? chain.explorers[0]
+        : null;
+      const explorer = String(firstExplorer?.url || "").trim();
+      const lowerName = name.toLowerCase();
+      const isTestnet =
+        lowerName.includes("testnet") ||
+        lowerName.includes("sepolia") ||
+        lowerName.includes("goerli") ||
+        lowerName.includes("devnet");
+
+      const chainData = {
+        name,
+        symbol,
+        chain_id: chainId,
+        rpc_method: "eth_blockNumber",
+        default_params: "[]",
+        response_path: "result",
+        http_method: "POST",
+        block_time: Number(chain?.averageBlockTime) || 15,
+        description: String(chain?.title || ""),
+        rpc_urls: rpcUrls,
+        explorer,
+        is_testnet: isTestnet,
+        icon: String(chain?.icon || ""),
+        short_name: String(chain?.shortName || "")
+      };
+
+      const existing = byChainId.get(chainId) || byName.get(lowerName);
+      if (existing) {
+        db.updateChain(existing.id, chainData);
+        updated += 1;
+      } else {
+        db.addChain(chainData);
+        added += 1;
+      }
+    }
+
+    res.json({
+      success: true,
+      added,
+      updated,
+      skipped,
+      totalFromChainlist: chainlist.length,
+      syncedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to sync chains: " + error.message });
+  }
+});
+
 // POST /chains
 app.post("/chains", (req, res) => {
   const chain = req.body;

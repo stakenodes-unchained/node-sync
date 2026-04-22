@@ -98,6 +98,24 @@ let currentFilter = "all";
 let searchQuery = "";
 let editingNodeId = null;
 
+function updateChainsLastSyncLabel(isoDateString = null) {
+  const label = document.getElementById("chainsLastSync");
+  if (!label) return;
+
+  if (!isoDateString) {
+    label.textContent = "Last sync: Never";
+    return;
+  }
+
+  const parsed = new Date(isoDateString);
+  if (Number.isNaN(parsed.getTime())) {
+    label.textContent = "Last sync: Never";
+    return;
+  }
+
+  label.textContent = `Last sync: ${parsed.toLocaleString()}`;
+}
+
 // 📡 Fetch available chains
 async function fetchChains() {
   try {
@@ -581,6 +599,49 @@ async function refreshChains() {
   }
 }
 
+// 🌐 Pull latest chains from Chainlist and persist to DB
+async function updateChainsFromChainlist() {
+  const updateBtn = document.getElementById("updateBtn");
+  const loadingSpinner = document.getElementById("chainsLoading");
+  const originalLabel = updateBtn ? updateBtn.textContent : "";
+
+  if (updateBtn) {
+    updateBtn.disabled = true;
+    updateBtn.textContent = "⏳ Syncing...";
+  }
+  if (loadingSpinner) {
+    loadingSpinner.style.display = "flex";
+  }
+
+  try {
+    const res = await fetch("/chains/sync", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data.error || `HTTP ${res.status}`);
+    }
+
+    await fetchChains();
+    displayChains();
+
+    const added = data.added ?? 0;
+    const updated = data.updated ?? 0;
+    const skipped = data.skipped ?? 0;
+    updateChainsLastSyncLabel(data.syncedAt || new Date().toISOString());
+    alert(`✅ Chain sync complete. Added: ${added}, Updated: ${updated}, Skipped: ${skipped}`);
+  } catch (error) {
+    alert("❌ Failed to sync chains from Chainlist: " + error.message);
+  } finally {
+    if (updateBtn) {
+      updateBtn.disabled = false;
+      updateBtn.textContent = originalLabel || "↻ Fetch Latest Chain";
+    }
+    if (loadingSpinner) {
+      loadingSpinner.style.display = "none";
+    }
+  }
+}
+
 // ➕ Show add chain form
 function showAddChainForm() {
   currentChainId = null;
@@ -796,6 +857,7 @@ document.getElementById("chainForm")?.addEventListener("submit", async (e) => {
 document.addEventListener("DOMContentLoaded", () => {
   fetchChains(); // Load available chains
   fetchStatus(); // Initial status load
+  updateChainsLastSyncLabel();
   setInterval(fetchStatus, 60 * 1000); // Auto-refresh every 60 seconds
 
   // Attach submit handler for Edit Node modal after DOM is ready
