@@ -273,6 +273,7 @@ document.getElementById("nodeForm")?.addEventListener("submit", async (e) => {
     custom_response_path:
       document.getElementById("responsePath").value.trim() || null,
     custom_http_method: document.getElementById("httpMethod").value || null,
+    check_interval: parseInt(document.getElementById("checkInterval").value) || 60,
   };
 
   const url = currentNodeId ? `/edit/${currentNodeId}` : "/add";
@@ -349,6 +350,8 @@ async function editNode(id) {
       node.custom_response_path || "result";
     document.getElementById("editHttpMethod").value =
       node.custom_http_method || "POST";
+    document.getElementById("editCheckInterval").value =
+      node.check_interval || 60;
 
     showEditNodeModal();
   } catch (error) {
@@ -817,6 +820,8 @@ document.addEventListener("DOMContentLoaded", () => {
           document.getElementById("editResponsePath").value.trim() || null,
         custom_http_method:
           document.getElementById("editHttpMethod").value || null,
+        check_interval:
+          parseInt(document.getElementById("editCheckInterval").value) || 60,
       };
 
       const res = await fetch(`/edit/${editingNodeId}`, {
