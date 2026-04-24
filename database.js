@@ -78,6 +78,13 @@ class DatabaseManager {
       if (!e.message.includes('duplicate column name')) throw e;
     }
 
+    // Migration: add tags column to existing nodes tables
+    try {
+    this.db.exec("ALTER TABLE nodes ADD COLUMN tags TEXT DEFAULT '[]'");
+    } catch (e) {
+    if (!e.message.includes('duplicate column name')) throw e;
+    }
+
     // Create indexes for better performance
     this.db.exec(`
       CREATE INDEX IF NOT EXISTS idx_nodes_chain_id ON nodes(chain_id);
@@ -111,7 +118,6 @@ class DatabaseManager {
       INSERT INTO supported_chains (name, symbol, rpc_method, default_params, response_path, http_method, block_time, description, chain_id, rpc_urls, explorer, is_testnet, icon, short_name)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    
     return stmt.run(
       sanitizedData.name,
       sanitizedData.symbol,
@@ -133,7 +139,6 @@ class DatabaseManager {
   getAllChains() {
     const stmt = this.db.prepare('SELECT * FROM supported_chains ORDER BY name');
     const chains = stmt.all();
-    
     // Parse JSON fields that are stored as strings
     return chains.map(chain => ({
       ...chain,
@@ -145,9 +150,7 @@ class DatabaseManager {
   getChainById(id) {
     const stmt = this.db.prepare('SELECT * FROM supported_chains WHERE id = ?');
     const chain = stmt.get(id);
-    
     if (!chain) return null;
-    
     // Parse JSON fields that are stored as strings
     return {
       ...chain,
@@ -164,7 +167,6 @@ class DatabaseManager {
           explorer = ?, is_testnet = ?, icon = ?, short_name = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `);
-    
     return stmt.run(
       chainData.name,
       chainData.symbol,
@@ -197,10 +199,11 @@ class DatabaseManager {
 
   // Node management methods
   addNode(nodeData) {
+    const tags = Array.isArray(nodeData.tags) ? nodeData.tags : [];
     const stmt = this.db.prepare(`
       INSERT INTO nodes (name, chain_id, local_url, remote_url, custom_method, custom_params,
-                        custom_headers, custom_response_path, custom_http_method, check_interval)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        custom_headers, custom_response_path, custom_http_method, check_interval, tags)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     return stmt.run(
@@ -213,13 +216,14 @@ class DatabaseManager {
       nodeData.custom_headers || '{}',
       nodeData.custom_response_path || null,
       nodeData.custom_http_method || null,
-      nodeData.check_interval ? Number(nodeData.check_interval) : 60
+      nodeData.check_interval ? Number(nodeData.check_interval) : 60,
+      JSON.stringify(tags)
     );
   }
 
   getAllNodes() {
     const stmt = this.db.prepare(`
-      SELECT n.*, c.name as chain_name, c.symbol as chain_symbol,
+      SELECT n.*, c.name as chain_name, c.symbol as chain_symbol, c.icon as chain_icon,
              c.rpc_method as default_rpc_method, c.default_params as default_params,
              c.response_path as default_response_path, c.http_method as default_http_method
       FROM nodes n
@@ -227,7 +231,31 @@ class DatabaseManager {
       WHERE n.is_active = 1
       ORDER BY n.name
     `);
-    return stmt.all();
+      return stmt.all().map(node => ({
+      ...node,
+      tags: node.tags ? JSON.parse(node.tags) : []
+      }));
+      }
+
+      getDisabledNodes() {
+      const stmt = this.db.prepare(`
+      SELECT n.*, c.name as chain_name, c.symbol as chain_symbol, c.icon as chain_icon
+      FROM nodes n
+      JOIN supported_chains c ON n.chain_id = c.id
+      WHERE n.is_active = 0
+      ORDER BY n.name
+      `);
+      return stmt.all().map(node => ({
+      ...node,
+      tags: node.tags ? JSON.parse(node.tags) : []
+      }));
+      }
+
+      setNodeActive(id, isActive) {
+      const stmt = this.db.prepare(`
+      UPDATE nodes SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+      `);
+      return stmt.run(isActive ? 1 : 0, id);
   }
 
   getNodeById(id) {
@@ -237,15 +265,21 @@ class DatabaseManager {
       JOIN supported_chains c ON n.chain_id = c.id
       WHERE n.id = ?
     `);
-    return stmt.get(id);
+    const node = stmt.get(id);
+      if (!node) return null;
+      return {
+      ...node,
+      tags: node.tags ? JSON.parse(node.tags) : []
+      };
   }
 
   updateNode(id, nodeData) {
+    const tags = Array.isArray(nodeData.tags) ? nodeData.tags : [];
     const stmt = this.db.prepare(`
       UPDATE nodes
       SET name = ?, chain_id = ?, local_url = ?, remote_url = ?, custom_method = ?,
           custom_params = ?, custom_headers = ?, custom_response_path = ?,
-          custom_http_method = ?, check_interval = ?, updated_at = CURRENT_TIMESTAMP
+          custom_http_method = ?, check_interval = ?, tags = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `);
 
@@ -260,6 +294,7 @@ class DatabaseManager {
       nodeData.custom_response_path || null,
       nodeData.custom_http_method || null,
       nodeData.check_interval ? Number(nodeData.check_interval) : 60,
+        JSON.stringify(tags),
       id
     );
   }
@@ -268,7 +303,7 @@ class DatabaseManager {
     // First delete all status history records for this node
     const deleteHistoryStmt = this.db.prepare('DELETE FROM node_status_history WHERE node_id = ?');
     deleteHistoryStmt.run(id);
-    
+
     // Then delete the node
     const stmt = this.db.prepare('DELETE FROM nodes WHERE id = ?');
     return stmt.run(id);
@@ -280,7 +315,7 @@ class DatabaseManager {
       INSERT INTO node_status_history (node_id, local_height, remote_height, delay, status, error_message)
       VALUES (?, ?, ?, ?, ?, ?)
     `);
-    
+
     return stmt.run(
       nodeId,
       statusData.localHeight,
@@ -300,6 +335,17 @@ class DatabaseManager {
     `);
     return stmt.all(nodeId, limit);
   }
+
+  getAllTags() {
+    const rows = this.db.prepare("SELECT tags FROM nodes WHERE tags IS NOT NULL AND tags != '[]'").all();
+    const tagSet = new Set();
+    rows.forEach(row => {
+    try {
+    JSON.parse(row.tags || '[]').forEach(t => tagSet.add(t));
+    } catch {}
+    });
+    return Array.from(tagSet).sort();
+    }
 
   // Utility methods
   close() {

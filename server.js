@@ -157,12 +157,14 @@ app.get("/status", async (_req, res) => {
         name,
         chain_name: node.chain_name,
         chain_symbol: node.chain_symbol,
+        chain_icon: node.chain_icon || "",
         localHeight,
         remoteHeight,
         delay,
         status,
         error: error.trim(),
         lastChecked: new Date(),
+        tags: node.tags || [],
       };
 
       // Save status to history
@@ -182,12 +184,43 @@ app.get("/status", async (_req, res) => {
     })
   );
 
-  const sorted = results
+  const activeResults = results
     .filter((r) => r.status === "fulfilled")
     .map((r) => r.value)
+
+      // Add disabled nodes to the response without monitoring them
+      const disabledResults = db.getDisabledNodes().map((node) => ({
+        id: node.id,
+        name: node.name,
+        chain_name: node.chain_name,
+        chain_symbol: node.chain_symbol,
+        chain_icon: node.chain_icon || "",
+        localHeight: null,
+        remoteHeight: null,
+        delay: null,
+        status: "Disabled",
+        error: "",
+        lastChecked: null,
+        tags: node.tags || [],
+      }));
+
+    const sorted = [...activeResults, ...disabledResults]
     .sort((a, b) => a.name.localeCompare(b.name));
 
   res.json(sorted);
+});
+
+// PATCH /nodes/:id/active — enable or disable a node
+app.patch("/nodes/:id/active", (req, res) => {
+  try {
+  const result = db.setNodeActive(req.params.id, req.body.is_active);
+  if (result.changes === 0) {
+    return res.status(404).json({ error: "Node not found." });
+  }
+    res.json({ success: true });
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to update node: " + error.message });
+  }
 });
 
 // POST /add
@@ -414,6 +447,16 @@ app.get("/nodes/:id/history", (req, res) => {
     res.status(500).json({ error: "Failed to fetch status history: " + error.message });
   }
 });
+
+  // GET /tags — return all unique tags across all nodes
+  app.get("/tags", (req, res) => {
+    try {
+    const tags = db.getAllTags();
+    res.json(tags);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch tags: " + error.message });
+    }
+  });
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
