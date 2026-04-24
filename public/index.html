@@ -174,7 +174,7 @@
     .btn-submit:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(124,58,237,0.5); }
 
     /* ── Global inputs ── */
-    input[type="text"], input[type="number"], input[type="url"], select, textarea {
+    input[type="text"], input[type="password"], input[type="number"], input[type="url"], select, textarea {
       width:100%; background:var(--input-bg); border:1px solid var(--input-border); border-radius:12px;
       color:var(--t1); font-family:'DM Mono',monospace; font-size:13px; padding:12px 16px;
       outline:none; transition:all 0.2s; appearance:none; -webkit-appearance:none;
@@ -222,7 +222,7 @@
     .btn-add-chain { background:linear-gradient(135deg,#7c3aed,#3b82f6); border:none; color:#fff; font-family:'Outfit',sans-serif; font-size:13px; font-weight:700; padding:9px 20px; border-radius:10px; cursor:pointer; transition:all 0.2s; box-shadow:0 4px 14px rgba(124,58,237,0.35); display:flex; align-items:center; gap:6px; }
     .btn-add-chain:hover { transform:translateY(-2px); box-shadow:0 8px 22px rgba(124,58,237,0.5); }
 
-    .chains-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; animation:fadeUp 0.4s ease 0.1s both; }
+    .chains-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(350px,1fr)); gap:16px; animation:fadeUp 0.4s ease 0.1s both; }
     .chain-card { background:var(--glass); border:1px solid var(--border); border-radius:18px; padding:22px 24px; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); transition:all 0.25s; position:relative; overflow:hidden; }
     .chain-card::before { content:''; position:absolute; top:0;left:0;right:0; height:1px; background:linear-gradient(90deg,transparent,var(--border2),transparent); }
     .chain-card:hover { background:var(--glass-h); border-color:var(--border2); transform:translateY(-3px); box-shadow:0 12px 36px rgba(0,0,0,0.3); }
@@ -293,6 +293,7 @@
     <button class="nav-pill active" onclick="switchTab('dashboard')">Dashboard</button>
     <button class="nav-pill" onclick="switchTab('addNode')">Add Node</button>
     <button class="nav-pill" onclick="switchTab('chains')">Chains</button>
+    <button class="nav-pill" onclick="switchTab('packages')">Packages</button>
   </div>
   <div class="nav-right">
     <div class="live-chip"><div class="live-dot"></div>Live</div>
@@ -349,7 +350,7 @@
           <thead>
             <tr>
               <th>Node</th><th>Chain</th><th>Status</th><th>Local Height</th>
-              <th>Remote Height</th><th>Delay</th><th>Last Checked</th><th>Error</th><th>Actions</th>
+              <th>Remote Height</th><th>Delta</th><th>Error Count</th><th>Last Checked</th><th>Error</th><th>Actions</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -531,6 +532,111 @@
   </div>
 </div>
 
+<!-- ── PACKAGES / AUTH TAB ── -->
+<div id="packages" class="tab-content">
+  <div class="chains-main">
+    <div style="max-width:980px;margin:0 auto;">
+      <div class="chains-page-hd">
+        <div class="chains-page-hd-top">
+          <div class="chains-page-hd-left">
+            <div class="chains-page-hd-icon">◎</div>
+            <div class="chains-page-hd-text">
+              <h1>Account & Packages</h1>
+              <p id="authLandingMessage">Start monitoring your nodes.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="authFormsWrap" style="display:flex;justify-content:center;margin-bottom:20px;">
+        <div class="chain-card" style="width:100%;max-width:520px;" id="authCard">
+          <div style="display:flex;gap:8px;margin-bottom:14px;">
+            <button id="authModeLoginBtn" class="btn-action" style="flex:1;" onclick="setAuthMode('login')">Login</button>
+            <button id="authModeRegisterBtn" class="btn-action" style="flex:1;" onclick="setAuthMode('register')">Create account</button>
+          </div>
+
+          <form id="loginForm" style="display:flex;flex-direction:column;gap:10px;">
+            <h3 style="margin-bottom:2px;">Login</h3>
+            <input id="loginEmail" type="text" placeholder="Email address" required />
+            <input id="loginPassword" type="password" placeholder="Password" required />
+            <button type="submit" class="btn-add-chain">Login</button>
+          </form>
+
+          <form id="registerForm" style="display:none;flex-direction:column;gap:10px;">
+            <h3 style="margin-bottom:2px;">Create Account</h3>
+            <input id="registerEmail" type="text" placeholder="Email address" required />
+            <input id="registerPassword" type="password" placeholder="Password" required />
+            <select id="registerAccountType" required>
+              <option value="individual">Individual</option>
+              <option value="business">Business</option>
+            </select>
+            <div id="orgField" style="display:none;">
+              <input id="registerOrgName" type="text" placeholder="Organization name" />
+            </div>
+            <button type="submit" class="btn-add-chain">Create account</button>
+          </form>
+        </div>
+      </div>
+
+      <div id="profileContent" style="display:none;">
+        <div class="stats-row" style="margin-bottom:16px;justify-content:center;">
+          <div class="stat-chip sc-total" style="min-width:220px;">
+            <div>
+              <div class="stat-chip-val" id="profilePlanName">Free</div>
+              <div class="stat-chip-lbl">Current Plan</div>
+            </div>
+          </div>
+          <div class="sc-div"></div>
+          <div class="stat-chip sc-main" style="min-width:220px;">
+            <div>
+              <div class="stat-chip-val" id="profilePlanStatus">Active</div>
+              <div class="stat-chip-lbl">Subscription Status</div>
+            </div>
+          </div>
+          <div class="sc-div"></div>
+          <div class="stat-chip sc-test" style="min-width:220px;">
+            <div>
+              <div class="stat-chip-val" id="profileNodeLimit">5</div>
+              <div class="stat-chip-lbl">Node Allowance</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chains-grid" style="margin-bottom:16px;">
+          <div class="chain-card">
+            <div class="chain-card-name">Account Profile</div>
+            <div class="chain-details" style="grid-template-columns:1fr;">
+              <div class="chain-detail-row"><span class="cd-label">Email</span><span class="cd-value" id="profileEmail">-</span></div>
+              <div class="chain-detail-row"><span class="cd-label">Account Type</span><span class="cd-value" id="profileAccountType">-</span></div>
+              <div class="chain-detail-row"><span class="cd-label">Organization</span><span class="cd-value" id="profileOrganization">-</span></div>
+              <div class="chain-detail-row"><span class="cd-label">Tenant ID</span><span class="cd-value" id="profileTenantId">-</span></div>
+              <div class="chain-detail-row"><span class="cd-label">Role</span><span class="cd-value" id="profileRole">-</span></div>
+            </div>
+          </div>
+          <div class="chain-card" id="billingSubscriptionCard">
+            <div class="chain-card-name">Billing & Subscription</div>
+            <div class="chain-desc" id="billingSummaryText" style="white-space:normal;">
+              Manage your plan and billing lifecycle from Stripe. Upgrades are applied through webhook events.
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">
+              <button class="btn-action" id="manageBillingBtn" onclick="openBillingPortal()">Manage Billing</button>
+              <button class="btn-action" onclick="switchTab('dashboard')">Open Dashboard</button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="chains-page-hd-text" style="margin-bottom:10px;">
+            <h1 style="font-size:20px;">Available Plans</h1>
+            <p>Choose the package that fits your monitoring needs.</p>
+          </div>
+          <div id="plansWrap" class="chains-grid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ── EDIT NODE MODAL ── -->
 <div id="editNodeModal" class="modal-overlay" style="display:none;">
   <div class="modal-card">
@@ -595,6 +701,68 @@
           <button type="submit" class="btn-modal-submit" id="editNodeSubmitBtn">Update Node</button>
         </div>
       </form>
+    </div>
+  </div>
+</div>
+
+<!-- ── NODE HISTORY / DETAILS MODAL ── -->
+<div id="nodeHistoryModal" class="modal-overlay" style="display:none;">
+  <div class="modal-card" style="max-width:1120px;">
+    <div class="modal-header">
+      <h3 id="nodeHistoryTitle">Monitoring Details</h3>
+      <button class="modal-close" onclick="hideNodeHistoryModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
+        <select id="historyRangePreset" onchange="updateHistoryRangeUI(); loadNodeHistory();" style="max-width:180px;">
+          <option value="1h">1 Hour</option>
+          <option value="6h">6 Hours</option>
+          <option value="12h">12 Hours</option>
+          <option value="1d">1 Day</option>
+          <option value="7d">7 Days</option>
+          <option value="custom">Custom</option>
+        </select>
+        <div id="historyCustomRangeWrap" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;">
+          <input id="historyFrom" type="datetime-local" style="max-width:220px;" />
+          <input id="historyTo" type="datetime-local" style="max-width:220px;" />
+          <button class="btn-action" onclick="loadNodeHistory()">Apply</button>
+        </div>
+      </div>
+
+      <div class="stats-row" style="margin-bottom:16px;">
+        <div class="stat-chip sc-total"><div><div class="stat-chip-val" id="metricCurrentResponse">—</div><div class="stat-chip-lbl">Current Response</div></div></div>
+        <div class="sc-div"></div>
+        <div class="stat-chip sc-main"><div><div class="stat-chip-val" id="metricAvgResponse">—</div><div class="stat-chip-lbl">Avg Response</div></div></div>
+        <div class="sc-div"></div>
+        <div class="stat-chip sc-test"><div><div class="stat-chip-val" id="metricUptime24h">—</div><div class="stat-chip-lbl">Uptime 24h</div></div></div>
+        <div class="sc-div"></div>
+        <div class="stat-chip sc-test"><div><div class="stat-chip-val" id="metricUptime30d">—</div><div class="stat-chip-lbl">Uptime 30d</div></div></div>
+        <div class="sc-div"></div>
+        <div class="stat-chip sc-test"><div><div class="stat-chip-val" id="metricUptime1y">—</div><div class="stat-chip-lbl">Uptime 1y</div></div></div>
+      </div>
+
+      <div class="chain-card" style="margin-bottom:16px;">
+        <svg id="historyChart" style="width:100%;height:220px;display:block;"></svg>
+      </div>
+
+      <div class="chain-card">
+        <div class="chain-card-name" style="margin-bottom:10px;">Event History</div>
+        <div class="table-scroll">
+          <table id="historyTable">
+            <thead>
+              <tr><th>Status</th><th>DateTime</th><th>HTTP Codes (Local/Remote)</th><th>Message</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:8px;">
+          <span class="mono-sm" id="historyPaginationInfo">Page 1 of 1</span>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-action" id="historyPrevBtn" onclick="changeHistoryPage(-1)">Previous</button>
+            <button class="btn-action" id="historyNextBtn" onclick="changeHistoryPage(1)">Next</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

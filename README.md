@@ -1,271 +1,210 @@
 # Node Sync Checker
 
-A web-based monitoring tool for checking blockchain node synchronization status. This application compares local and remote node heights to determine sync status and provides a clean dashboard interface for managing multiple nodes.
+Multi-tenant blockchain node monitoring platform with account onboarding, package/billing flows, independent worker-based monitoring, and rich historical diagnostics.
 
-## Features
+## What It Does
 
-- **Real-time Monitoring**: Check synchronization status of multiple blockchain nodes
-- **Web Dashboard**: Clean, responsive interface for viewing node status
-- **Node Management**: Add, edit, and delete nodes through the web interface
-- **Chain Management**: View, edit, and manage blockchain network configurations
-- **Custom Chain Support**: Add your own blockchain networks with custom settings
-- **Status Classification**: Automatically categorizes nodes as Healthy, Degrading, Out of Sync, Offline, or Unknown
-- **Status History**: Track node status over time with historical data
-- **Export Functionality**: Export monitoring data to CSV format
-- **SQLite Database**: Lightweight, persistent storage for nodes and chain configurations
-- **Docker Support**: Easy deployment with Docker and Docker Compose
-- **Flexible Configuration**: Support for different RPC methods, HTTP methods, and custom headers
+- Monitors local vs remote RPC nodes and computes sync **Delta** (`remote_height - local_height`)
+- Classifies health into `Healthy`, `Degrading`, `Out of Sync`, `Offline`, `Unknown`
+- Tracks per-node **consecutive error count** (resets to `0` after a successful check)
+- Stores rich history for each check (status codes, response times, payloads, headers, errors)
+- Provides monitoring details UI with:
+  - response trend chart
+  - uptime metrics
+  - event history with pagination
+  - range filters (`1h`, `6h`, `12h`, `1d`, `7d`, custom)
+- Supports account/profile and package lifecycle with Stripe billing:
+  - Subscription mode (card/bank)
+  - Manual monthly checkout mode
+- Enforces lifecycle controls (grace/block/retention) in API access
 
-## Status Categories
+## Architecture
 
-- **Healthy**: Delay < 5 blocks
-- **Degrading**: Delay 5-19 blocks  
-- **Out of Sync**: Delay ≥ 20 blocks
-- **Offline**: Local node unreachable
-- **Unknown**: Remote node unreachable or other errors
+### API Server
+
+- `server.js`
+- Handles auth, tenant-scoped APIs, billing webhooks, package/profile endpoints
+- `GET /status` is **read-only snapshot** from persisted data (no live probing)
+
+### Monitor Worker
+
+- `monitor-worker.js`
+- Runs independent polling loop by node `check_interval`
+- Executes RPC checks and writes full telemetry into `node_status_history`
+- Controlled by env variables for tick/timeout/response limits/log verbosity
+
+### Database
+
+- `database.js` with SQLite (`better-sqlite3`)
+- Core tables include:
+  - `users`, `tenants`, `memberships`
+  - `subscriptions`, `payments`
+  - `supported_chains`, `nodes`, `node_status_history`
 
 ## Quick Start
 
-### Using Docker (Recommended)
+### 1) Setup
 
-1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd node-sync
+cp .env.example .env
+npm install
+npm run init-chains
 ```
 
-2. Create db file:
+### 2) Run Locally (API + Worker)
+
+Terminal 1:
+
 ```bash
-cp sync_checker.db.example sync_checker.db
+npm start
 ```
 
-3. Start the application:
+Terminal 2:
+
+```bash
+npm run start:worker
+```
+
+Open: `http://localhost:3000`
+
+### 3) Run with Docker Compose
+
 ```bash
 docker-compose up --build -d
 ```
 
-3. Open your browser and navigate to `http://localhost:3000`
-
-### Manual Installation
-
-1. Install Node.js dependencies:
-```bash
-npm install express node-fetch better-sqlite3
-```
-
-2. Initialize blockchain networks:
-```bash
-npm run init-chains
-```
-
-3. Start the server:
-```bash
-npm start
-```
-
-4. Open your browser and navigate to `http://localhost:3000`
-
-## Configuration
-
-### Supported Chains
-
-The application automatically fetches and populates supported blockchain networks from [ChainList](https://chainlist.org/rpcs.json), including:
-
-- **Ethereum Mainnet**: ETH, `eth_blockNumber` method
-- **Polygon**: MATIC, `eth_blockNumber` method  
-- **Binance Smart Chain**: BNB, `eth_blockNumber` method
-- **Avalanche**: AVAX, `eth_blockNumber` method
-- **Arbitrum One**: ARB, `eth_blockNumber` method
-- **Optimism**: OP, `eth_blockNumber` method
-- **Base**: ETH, `eth_blockNumber` method
-- **And 40+ more networks** with real RPC endpoints
-
-Each chain comes with:
-- Pre-configured RPC methods and parameters
-- Multiple public RPC endpoints
-- Correct block times and response paths
-- Explorer links and metadata
-
-### Adding Nodes
-
-Use the web interface to add nodes. The form now includes:
-
-- **Node Name**: Unique identifier for the node
-- **Blockchain Network**: Dropdown with 50+ supported chains from ChainList
-- **Local URL**: URL of your local node
-- **Remote URL**: Pre-filled with public RPC endpoints from ChainList
-- **Custom Settings** (optional): Override chain defaults for RPC method, parameters, headers, etc.
-
-When you select a blockchain network, the form automatically populates with:
-- Default RPC method (e.g., `eth_blockNumber`)
-- Default parameters (usually `[]`)
-- Default response path (`result`)
-- Public RPC endpoints for the remote URL
-
-### Chain Management
-
-The **Chains** tab provides comprehensive management of blockchain network configurations:
-
-- **View All Chains**: See all supported networks with their configurations
-- **Edit Chain Settings**: Modify RPC methods, block times, parameters, and endpoints
-- **Add Custom Chains**: Create new blockchain network configurations
-- **Delete Chains**: Remove unused or incorrect chain configurations
-- **Testnet/Mainnet Indicators**: Visual badges to distinguish network types
-
-#### Chain Configuration Fields
-
-- **Name**: Display name for the blockchain network
-- **Symbol**: Native token symbol (e.g., ETH, BTC, MATIC)
-- **Chain ID**: Unique identifier for the network
-- **RPC Method**: Default RPC method for block height queries
-- **Default Params**: Default parameters for RPC calls
-- **Response Path**: Path to extract block height from response
-- **HTTP Method**: HTTP method for RPC calls (POST/GET)
-- **Block Time**: Average time between blocks in seconds
-- **Description**: Additional information about the network
-- **Explorer URL**: Block explorer URL for the network
-- **RPC URLs**: List of public RPC endpoints
-- **Testnet Flag**: Whether this is a testnet or mainnet
-
-### Node Configuration Fields
-
-- **name**: Unique identifier for the node
-- **chain_id**: ID of the supported chain
-- **local_url**: URL of your local node
-- **remote_url**: URL of the reference/remote node
-- **custom_method**: Override the chain's default RPC method
-- **custom_params**: Override the chain's default parameters
-- **custom_headers**: Additional HTTP headers (JSON object)
-- **custom_response_path**: Override the chain's default response path
-- **custom_http_method**: Override the chain's default HTTP method
-
-## API Endpoints
-
-### Node Management
-- `GET /` - Serves the web dashboard
-- `GET /status` - Returns current status of all configured nodes
-- `GET /nodes/:id` - Get individual node data for editing
-- `POST /add` - Add a new node
-- `PUT /edit/:id` - Edit an existing node
-- `DELETE /delete/:id` - Delete a node
-- `GET /nodes/:id/history` - Get status history for a node
-
-### Chain Management
-- `GET /chains` - Get all supported chains
-- `POST /chains` - Add a new supported chain
-- `PUT /chains/:id` - Edit an existing chain
-- `DELETE /chains/:id` - Delete a chain
-
-## Docker Configuration
-
-The application includes Docker support with:
-
-- **Dockerfile**: Multi-stage build using Node.js 20 Alpine
-- **docker-compose.yml**: Complete setup with volume mounts for persistence
-
-### Docker Compose Services
-
-- **sync-checker**: Main application service
-- **Port**: 3000 (mapped to host)
-- **Volumes**: 
-  - `sync_checker.db` - SQLite database file
-  - `public/` - Static web assets
-
-## File Structure
-
-```
-node-sync/
-├── server.js              # Main Express server
-├── database.js            # Database manager and schema
-├── sync_checker.db        # SQLite database (created on first run)
-├── public/
-│   ├── index.html         # Web dashboard
-│   └── frontend.js        # Frontend JavaScript
-├── docker-compose.yml     # Docker Compose configuration
-├── Dockerfile            # Docker image definition
-├── package.json          # Node.js dependencies
-└── README.md             # This file
-```
+Services:
+- `sync-checker` (API)
+- `monitor-worker` (independent monitor loop)
 
 ## Environment Variables
 
-- `PORT`: Server port (default: 3000)
+### Core
 
-## Chain Management
+- `PORT` (default `3000`)
+- `APP_BASE_URL` (default `http://localhost:3000`)
+- `JWT_SECRET`
 
-### Initializing Chains
+### Stripe Billing
 
-The application uses a separate script to initialize blockchain networks from ChainList:
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_PRO_SUBSCRIPTION_PRICE_ID` (recurring price ID)
+- `STRIPE_PRO_ONE_TIME_PRICE_ID` (one-time price ID)
+
+### Monitor Worker
+
+- `MONITOR_WORKER_LOG_LEVEL` (`error|warn|info|debug`, default `info`)
+- `MONITOR_WORKER_HEARTBEAT_EVERY_TICKS` (default `12`)
+- `MONITOR_WORKER_TICK_MS` (default `5000`)
+- `MONITOR_REQUEST_TIMEOUT_MS` (default `10000`)
+- `MONITOR_MAX_RESPONSE_BYTES` (default `50000`)
+
+## Stripe Sandbox Notes
+
+1. Create two Stripe prices:
+   - recurring monthly price for subscriptions
+   - one-time price for manual monthly payment
+2. Put their IDs in `.env`.
+3. Forward webhooks:
 
 ```bash
-# Initialize chains from ChainList (first time)
-npm run init-chains
-
-# Force reinitialize (clears existing chains)
-npm run init-chains-force
-
-# List all chains in database
-npm run list-chains
+stripe login
+stripe listen --forward-to localhost:3000/billing/webhook
 ```
 
-### Chain Management Commands
+4. Use profile/package UI to test:
+   - subscribe (card/bank)
+   - manual monthly payment
+   - resume/blocked lifecycle behavior
 
-```bash
-# Initialize chains
-node init-chains.js
+## Key API Endpoints
 
-# Force reinitialize (clears existing)
-node init-chains.js force
+### Auth/Profile
 
-# List current chains
-node init-chains.js list
+- `POST /auth/register`
+- `POST /auth/login`
+- `GET /auth/me`
 
-# Show help
-node init-chains.js help
+### Monitoring
+
+- `GET /status` — latest persisted status snapshot for tenant nodes
+- `GET /nodes/:id`
+- `GET /nodes/:id/history?range=1h|6h|12h|1d|7d&page=1&limit=50`
+- `GET /nodes/:id/history?range=custom&from=<iso>&to=<iso>&page=1&limit=50`
+
+History response shape:
+
+```json
+{
+  "items": [],
+  "pagination": {
+    "page": 1,
+    "limit": 50,
+    "total": 123,
+    "totalPages": 3,
+    "hasNextPage": true,
+    "hasPrevPage": false
+  }
+}
 ```
 
-## Development
+### Node CRUD
 
-### Prerequisites
+- `POST /add`
+- `PUT /edit/:id`
+- `DELETE /delete/:id`
 
-- Node.js 20+
-- Docker (optional)
+### Chains
 
-### Running in Development
+- `GET /chains`
+- `POST /chains`
+- `PUT /chains/:id`
+- `DELETE /chains/:id`
+- `POST /chains/sync`
 
-1. Install dependencies:
-```bash
-npm install express node-fetch better-sqlite3
+### Billing
+
+- `GET /billing/subscription`
+- `GET /billing/verify-access`
+- `POST /billing/checkout-session`
+- `POST /billing/confirm-session`
+- `POST /billing/portal`
+- `POST /billing/webhook`
+
+## Monitoring Details UX
+
+In Node Details modal:
+
+- response chart with legend and min/avg/max markers
+- current and average response metrics
+- uptime 24h/30d/1y
+- event history table
+- range filters + pagination
+- DateTime is rendered in local time
+
+## Scripts
+
+- `npm start` — API server
+- `npm run start:worker` — monitoring worker
+- `npm run init-chains` — seed chain list
+- `npm run init-chains-force` — reseed chains
+- `npm run list-chains` — print chains
+
+## File Structure (Core)
+
+```text
+node-sync/
+├── server.js
+├── monitor-worker.js
+├── database.js
+├── init-chains.js
+├── chainListFetcher.js
+├── public/
+│   ├── index.html
+│   └── frontend.js
+├── docker-compose.yml
+├── Dockerfile
+├── package.json
+└── README.md
 ```
-
-2. Initialize chains:
-```bash
-npm run init-chains
-```
-
-2(a). Initialize chains from backup:
-```bash
-cp sync_checker.db.example sync_checker.db
-```
-
-3. Start the development server:
-```bash
-npm start
-```
-
-4. The server will start on `http://localhost:3000`
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
-
-## Support
-
-For issues and questions, please open an issue on the GitHub repository.

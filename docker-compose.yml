@@ -3,8 +3,24 @@ version: '3.8'
 services:
   sync-checker:
     build: .
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
     ports:
       - "3000:3000"
+    volumes:
+      - ./sync_checker.db:/app/sync_checker.db
+      - ./public:/app/public
+    restart: unless-stopped
+
+  monitor-worker:
+    build: .
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+    command: ["node", "monitor-worker.js"]
     volumes:
       - ./sync_checker.db:/app/sync_checker.db
       - ./public:/app/public
