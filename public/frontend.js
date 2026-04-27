@@ -8,6 +8,171 @@ let editingNodeId = null;
 let authContext = null;
 let authMode = "login";
 
+// ── Searchable Select ──────────────────────────────────────────────────────────
+class SearchableSelect {
+constructor(selectEl, placeholder = 'Search...') {
+this.select = selectEl;
+this.placeholder = placeholder;
+this.isOpen = false;
+this._build();
+this._bindOutsideClick();
+}
+
+_build() {
+this.wrapper = document.createElement('div');
+this.wrapper.className = 'ss-wrapper';
+
+this.trigger = document.createElement('button');
+this.trigger.type = 'button';
+this.trigger.className = 'ss-trigger ss-placeholder';
+this.trigger.addEventListener('click', () => this._toggle());
+
+this.dropdown = document.createElement('div');
+this.dropdown.className = 'ss-dropdown';
+
+this.searchInput = document.createElement('input');
+this.searchInput.type = 'text';
+this.searchInput.className = 'ss-search';
+this.searchInput.placeholder = this.placeholder;
+this.searchInput.addEventListener('input', () => this._renderList(this.searchInput.value));
+this.searchInput.addEventListener('click', e => e.stopPropagation());
+
+this.list = document.createElement('div');
+this.list.className = 'ss-list';
+
+this.dropdown.appendChild(this.searchInput);
+this.dropdown.appendChild(this.list);
+this.wrapper.appendChild(this.trigger);
+
+this.select.style.display = 'none';
+this.select.parentNode.insertBefore(this.wrapper, this.select.nextSibling);
+
+this._updateTrigger();
+}
+
+// Call after the underlying <select> options change
+refresh() {
+this._syncDisabled();
+this._updateTrigger();
+if (this.isOpen) this._renderList(this.searchInput.value);
+}
+
+// Set value programmatically (does not fire change event)
+setValue(value) {
+this.select.value = String(value);
+this._syncDisabled();
+this._updateTrigger();
+}
+
+_syncDisabled() {
+this.trigger.disabled = this.select.disabled;
+this.wrapper.classList.toggle('ss-disabled', this.select.disabled);
+}
+
+_updateTrigger() {
+const opt = this.select.options[this.select.selectedIndex];
+const hasValue = opt && opt.value && !opt.disabled;
+this.trigger.textContent = hasValue ? opt.textContent : (this.select.options[0]?.textContent || 'Select...');
+this.trigger.classList.toggle('ss-placeholder', !hasValue);
+}
+
+_renderList(query) {
+this.list.innerHTML = '';
+const q = query.toLowerCase();
+let count = 0;
+Array.from(this.select.options).forEach(opt => {
+if (!opt.value || opt.disabled) return;
+if (q && !opt.textContent.toLowerCase().includes(q)) return;
+const item = document.createElement('div');
+item.className = 'ss-option' + (opt.value === this.select.value ? ' ss-selected' : '');
+item.textContent = opt.textContent;
+item.addEventListener('click', () => this._select(opt.value));
+this.list.appendChild(item);
+count++;
+});
+if (count === 0) {
+const empty = document.createElement('div');
+empty.className = 'ss-empty';
+empty.textContent = 'No results';
+this.list.appendChild(empty);
+}
+}
+
+_select(value) {
+this.select.value = value;
+this.select.dispatchEvent(new Event('change'));
+this._updateTrigger();
+this._close();
+}
+
+_toggle() {
+if (this.select.disabled) return;
+this.isOpen ? this._close() : this._open();
+}
+
+// Position the dropdown directly under the trigger.
+// If the trigger has scrolled out of view, close instead.
+_updatePosition() {
+const rect = this.trigger.getBoundingClientRect();
+if (rect.bottom < 0 || rect.top > window.innerHeight) {
+this._close();
+return;
+}
+this.dropdown.style.top = (rect.bottom + 6) + 'px';
+this.dropdown.style.left = rect.left + 'px';
+this.dropdown.style.width = rect.width + 'px';
+}
+
+_open() {
+this.isOpen = true;
+document.body.appendChild(this.dropdown);
+this._updatePosition();
+this.searchInput.value = '';
+this._renderList('');
+requestAnimationFrame(() => this.searchInput.focus());
+
+// Listen for any scroll (capture catches modals too) and window resize
+this._onScroll = () => this._updatePosition();
+window.addEventListener('scroll', this._onScroll, true);
+window.addEventListener('resize', this._onScroll);
+}
+
+_close() {
+if (!this.isOpen) return;
+this.isOpen = false;
+window.removeEventListener('scroll', this._onScroll, true);
+window.removeEventListener('resize', this._onScroll);
+if (this.dropdown.parentNode) this.dropdown.parentNode.removeChild(this.dropdown);
+}
+
+_bindOutsideClick() {
+document.addEventListener('click', e => {
+if (this.isOpen && !this.wrapper.contains(e.target) && !this.dropdown.contains(e.target)) {
+this._close();
+}
+});
+}
+}
+
+// Registry of all SearchableSelect instances, keyed by select element id
+const searchableSelects = {};
+// ──────────────────────────────────────────────────────────────────────────────
+
+// ── Tag state ─────────────────────────────────────────────────────────────────
+var allNodeData = []; // full list from last /status fetch
+var activeTagFilter = null; // currently selected tag (null = show all)
+var tagSearchQuery = ''; // live text search across node tags
+var addNodeTags = []; // tags being added in the Add Node form
+var editNodeTags = []; // tags being edited in the Edit Node modal
+// ──────────────────────────────────────────────────────────────────────────────
+
+// Format chain dropdown label: keeps the name as-is, uppercases the symbol in brackets
+// e.g. "Abey Testnet" + "tABEY" => "Abey Testnet (TABEY)"
+function formatChainLabel(name, symbol) {
+ return name + ' (' + symbol.toUpperCase() + ')';
+}
+
+// UI class helpers
 function nodeAvatarClass(index) { return `av-${(index % 5) + 1}`; }
 function chainPillClass(symbol) { return ({ ETH: "cp-blue", BNB: "cp-amber", MATIC: "cp-purple", AVAX: "cp-red", SOL: "cp-teal" }[symbol]) || "cp-blue"; }
 function statusPillClass(status) { return status === "Healthy" ? "sp-ok" : status === "Degrading" ? "sp-warn" : status === "Out of Sync" ? "sp-err" : "sp-off"; }
@@ -66,6 +231,29 @@ function updateHeaderUser() {
   holder.appendChild(logout);
 }
 
+// Returns the llamao icon URL only when both chain_name and chain_symbol from the node
+// match a chain in availableChains (name + symbol exact match), AND the chain has an
+// icon slug. chain_icon is now included directly in the /status response via the DB JOIN.
+function getChainIconUrl(chainName, chainSymbol, chainIcon) {
+  if (!chainName || !chainSymbol || !chainIcon) return null;
+  const matched = availableChains.find(c => c.name === chainName && c.symbol === chainSymbol);
+  if (!matched) return null;
+  return `https://icons.llamao.fi/icons/chains/rsz_${chainIcon}.jpg`;
+}
+
+// Fallback: replace a broken chain icon <img> with the default initials avatar
+function handleChainIconError(img, avClass, initials) {
+  const div = document.createElement('div');
+  div.className = `node-av ${avClass}`;
+  div.textContent = initials;
+  img.parentNode.replaceChild(div, img);
+}
+
+function chainPillClass(symbol) {
+  const map = { ETH: "cp-blue", BNB: "cp-amber", MATIC: "cp-purple", AVAX: "cp-red", SOL: "cp-teal" };
+  return map[symbol] || "cp-blue";
+}
+
 function renderAuth() {
   updateHeaderUser();
   const landing = document.getElementById("authLandingMessage");
@@ -116,41 +304,419 @@ async function fetchMe() {
   renderAuth();
 }
 
+// Convert a date to a short relative string like "5s ago", "2m ago", "1h ago"
+function timeAgo(dateStr) {
+  var seconds = Math.floor((new Date() - new Date(dateStr)) / 1000);
+    if (seconds < 60) return seconds + 's ago';
+  var minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return minutes + 'm ago';
+  var hours = Math.floor(minutes / 60);
+    if (hours < 24) return hours + 'h ago';
+    return Math.floor(hours / 24) + 'd ago';
+}
+
+// Update just the text in every Last Checked cell without re-drawing the table
+function updateRelativeTimes() {
+  var cells = document.querySelectorAll('.last-checked-cell[data-checked]');
+    cells.forEach(function(cell) {
+  var ts = cell.getAttribute('data-checked');
+  if (ts) cell.textContent = timeAgo(ts);
+  });
+}
+
+// 📊 Fetch node status and update dashboard
 async function fetchStatus() {
   if (!authContext) return;
   const res = await apiFetch("/status");
   const data = await res.json();
+  // Normalize tags from API so dashboard pills/filtering always work.
+  data.forEach(function(node) {
+    if (Array.isArray(node.tags)) return;
+    if (typeof node.tags === "string" && node.tags.trim()) {
+      try {
+        const parsed = JSON.parse(node.tags);
+        node.tags = Array.isArray(parsed) ? parsed : [];
+      } catch (_e) {
+        node.tags = [];
+      }
+      return;
+    }
+    node.tags = [];
+  });
   data.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
-  const tbody = document.querySelector("#statusTable tbody");
-  if (!tbody) return;
-  tbody.innerHTML = "";
-  const total = data.length;
-  const healthy = data.filter((n) => n.status === "Healthy").length;
-  const warnings = data.filter((n) => n.status === "Degrading").length;
-  const errors = data.filter((n) => n.status === "Out of Sync" || n.status === "Offline").length;
-  if (document.getElementById("statTotal")) document.getElementById("statTotal").textContent = total;
-  if (document.getElementById("statHealthy")) document.getElementById("statHealthy").textContent = healthy;
-  if (document.getElementById("statWarning")) document.getElementById("statWarning").textContent = warnings;
-  if (document.getElementById("statError")) document.getElementById("statError").textContent = errors;
-  if (document.getElementById("panelSubtitle")) document.getElementById("panelSubtitle").textContent = `${total} node${total !== 1 ? "s" : ""} monitored`;
 
-  data.forEach((node, index) => {
-    const row = document.createElement("tr");
+  allNodeData = data;
+
+  const total = data.length;
+  const healthy = data.filter(n => n.status === "Healthy").length;
+  const warnings = data.filter(n => n.status === "Degrading").length;
+  const errors = data.filter(n => n.status === "Out of Sync" || n.status === "Offline").length;
+  const disabled = data.filter(n => n.status === "Disabled").length;
+
+  const statTotal = document.getElementById("statTotal");
+  const statHealthy = document.getElementById("statHealthy");
+  const statWarning = document.getElementById("statWarning");
+  const statError = document.getElementById("statError");
+  const statDisabled = document.getElementById("statDisabled");
+  const panelSubtitle = document.getElementById("panelSubtitle");
+
+  if (statTotal) statTotal.textContent = total;
+  if (statHealthy) statHealthy.textContent = healthy;
+  if (statWarning) statWarning.textContent = warnings;
+  if (statError) statError.textContent = errors;
+  if (statDisabled) statDisabled.textContent = disabled;
+  if (panelSubtitle) panelSubtitle.textContent = `${total} node${total !== 1 ? "s" : ""} monitored`;
+
+renderNodeTable();
+renderTagFilterBar();
+}
+
+// Render the node table, applying the active tag filter and/or tag search query
+function renderNodeTable() {
+var data = allNodeData;
+if (activeTagFilter) {
+data = data.filter(function(node) {
+return (node.tags || []).includes(activeTagFilter);
+});
+}
+if (tagSearchQuery) {
+var q = tagSearchQuery.toLowerCase();
+data = data.filter(function(node) {
+return (node.tags || []).some(function(tag) {
+return tag.toLowerCase().includes(q);
+});
+});
+}
+
+var tbody = document.querySelector("#statusTable tbody");
+tbody.innerHTML = "";
+
+data.forEach(function(node, index) {
+var row = document.createElement("tr");
+var avClass = nodeAvatarClass(index);
+var cpClass = chainPillClass(node.chain_symbol || "");
+var spClass = statusPillClass(node.status);
+var dcClass = delayChipClass(node.delay);
+var initials = (node.name || "??").substring(0, 2).toUpperCase();
+var chainLabel = (node.chain_name || "Unknown") + " (" + (node.chain_symbol || "?") + ")";
+var delay = node.delay !== null && node.delay !== undefined ? node.delay : "—";
+var error = node.error || "";
+var lastCheckedFull = node.lastChecked ? new Date(node.lastChecked).toLocaleString() : "—";
+var lastChecked = node.lastChecked ? timeAgo(node.lastChecked) : "—";
+var tagPillsHtml = (node.tags || []).map(function(tag) {
+return '<span class="node-tag-pill">' + tag + '</span>';
+}).join('');
+
+var iconUrl = getChainIconUrl(node.chain_name, node.chain_symbol, node.chain_icon);
+var avatarHtml = iconUrl
+? `<img class="node-av-icon" src="${iconUrl}" alt="${initials}" onerror="handleChainIconError(this,'${avClass}','${initials}')">`
+: `<div class="node-av ${avClass}">${initials}</div>`;
+
     row.innerHTML = `
-      <td><div class="node-cell"><div class="node-av ${nodeAvatarClass(index)}">${(node.name || "??").substring(0, 2).toUpperCase()}</div><div><div class="node-nm">${node.name}</div><div class="node-id">#${node.id}</div></div></div></td>
-      <td><span class="chain-pill ${chainPillClass(node.chain_symbol || "")}"><span class="cdot"></span>${node.chain_name || "Unknown"} (${node.chain_symbol || "?"})</span></td>
-      <td><span class="status-pill ${statusPillClass(node.status)}"><span class="sdot"></span>${node.status}</span></td>
-      <td class="mono">${node.localHeight ?? "—"}</td>
-      <td class="mono">${node.remoteHeight ?? "—"}</td>
-      <td><span class="delay-chip ${delayChipClass(node.delay)}">${node.delay ?? "—"}</span></td>
+      <td>
+        <div class="node-cell">
+        ${avatarHtml}
+          <div>
+            <div class="node-nm">${node.name}</div>
+            <div class="node-id">#${node.id}</div>
+            ${tagPillsHtml ? '<div class="node-tags">' + tagPillsHtml + '</div>' : ''}
+          </div>
+        </div>
+      </td>
+      <td><span class="chain-pill ${cpClass}"><span class="cdot"></span>${chainLabel}</span></td>
+      <td><span class="status-pill ${spClass}"><span class="sdot"></span>${node.status}</span></td>
+      <td class="mono">${node.localHeight ?? "—"} / ${node.remoteHeight ?? "—"}</td>
+      <td><span class="delay-chip ${dcClass}">${delay}</span></td>
       <td class="mono">${Number(node.errorCount || 0)}</td>
-      <td class="mono-sm">${node.lastChecked ? new Date(node.lastChecked).toLocaleString() : "—"}</td>
-      <td class="err-text" style="color:var(--red);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${node.error ?? ""}</td>
-      <td><div class="act-wrap"><button class="btn-ed" onclick="openNodeDetails(${node.id}, '${(node.name || "").replace(/'/g, "\\'")}')">View Details</button><button class="btn-ed" onclick="editNode(${node.id})">Edit</button><button class="btn-dl" onclick="deleteNode(${node.id})">Delete</button></div></td>`;
+      <td class="mono-sm last-checked-cell" data-checked="${node.lastChecked || ''}" data-tooltip="${lastCheckedFull}">${lastChecked}</td>
+      <td class="err-text${error ? ' err-clickable' : ''}" style="color:var(--red);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis${error ? ';cursor:pointer' : ''}" ${error ? `onclick="showErrorDetail(this)" data-error="${error.replace(/"/g, '&quot;')}"` : ''}>${error || '—'}</td>
+      <td>
+      <button class="btn-more" onclick="openNodeMenu(event, ${node.id})" data-active="${node.status === 'Disabled' ? '0' : '1'}">···</button>
+      </td>
+    `;
     tbody.appendChild(row);
   });
 }
 
+// Build the tag filter bar (dropdown + search) above the node table
+function renderTagFilterBar() {
+var bar = document.getElementById('tagFilterBar');
+if (!bar) return;
+
+var allTags = new Set();
+allNodeData.forEach(function(node) {
+(node.tags || []).forEach(function(tag) { allTags.add(tag); });
+});
+
+if (allTags.size === 0 && !tagSearchQuery) {
+bar.style.display = 'none';
+return;
+}
+
+bar.style.display = 'flex';
+
+var tags = Array.from(allTags).sort();
+var dropdownLabel = activeTagFilter || 'All Tags';
+
+var itemsHtml = [
+'<div class="tag-dropdown-item' + (!activeTagFilter ? ' active' : '') + '" onclick="setTagFilter(null)">All Tags</div>'
+].concat(tags.map(function(tag) {
+var escaped = tag.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+return '<div class="tag-dropdown-item' + (activeTagFilter === tag ? ' active' : '') + '" onclick="setTagFilter(\'' + escaped + '\')">' + tag + '</div>';
+})).join('');
+
+bar.innerHTML =
+'<span class="tag-filter-label">Filter by Tag:</span>' +
+'<div class="tag-dropdown-wrapper" id="tagDropdownWrapper">' +
+'<button type="button" class="tag-dropdown-trigger' + (activeTagFilter ? ' active' : '') + '" id="tagDropdownTrigger" onclick="toggleTagDropdown(event)">' +
+'<span>' + dropdownLabel + '</span>' +
+'<svg width="10" height="7" viewBox="0 0 10 7" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+'</button>' +
+'<div class="tag-dropdown-menu" id="tagDropdownMenu" style="display:none;">' + itemsHtml + '</div>' +
+'</div>' +
+'<div class="tag-search-wrap">' +
+'<svg viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="white" stroke-width="1.5"/><path d="M11 11l3 3" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>' +
+'<input type="text" class="tag-search-input" id="tagSearchInput" placeholder="Search tags..." value="' + tagSearchQuery.replace(/"/g, '&quot;') + '" oninput="onTagSearch(this.value)" />' +
+'</div>';
+}
+
+// Toggle the tag dropdown open/closed
+function toggleTagDropdown(event) {
+event.stopPropagation();
+var menu = document.getElementById('tagDropdownMenu');
+if (!menu) return;
+menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+// Close the tag dropdown
+function closeTagDropdown() {
+var menu = document.getElementById('tagDropdownMenu');
+if (menu) menu.style.display = 'none';
+}
+
+// Set tag filter from the dropdown and re-render
+function setTagFilter(tag) {
+activeTagFilter = tag;
+closeTagDropdown();
+renderNodeTable();
+renderTagFilterBar();
+}
+
+// Live tag text search — filters nodes whose tags match the typed query
+function onTagSearch(query) {
+tagSearchQuery = query;
+renderNodeTable();
+}
+
+// ── Tag input widget helpers ────────────────────────────────────────────────
+
+// Draw tag chips inside the wrap div, each with an × remove button
+function renderTagChips(tags, wrapId, removeCallback) {
+var wrap = document.getElementById(wrapId);
+if (!wrap) return;
+var input = wrap.querySelector('input');
+wrap.querySelectorAll('.tag-chip').forEach(function(c) { c.remove(); });
+tags.forEach(function(tag) {
+var chip = document.createElement('span');
+chip.className = 'tag-chip';
+var text = document.createElement('span');
+text.textContent = tag;
+var removeBtn = document.createElement('button');
+removeBtn.type = 'button';
+removeBtn.className = 'tag-chip-remove';
+removeBtn.textContent = '×';
+removeBtn.addEventListener('click', function() { removeCallback(tag); });
+chip.appendChild(text);
+chip.appendChild(removeBtn);
+if (input) wrap.insertBefore(chip, input);
+else wrap.appendChild(chip);
+});
+}
+
+// Add Node form tag handlers
+function handleAddTagKeydown(event) {
+if (event.key === 'Enter') {
+event.preventDefault();
+var val = event.target.value.trim();
+if (!val) return;
+if (!addNodeTags.includes(val)) {
+addNodeTags.push(val);
+renderTagChips(addNodeTags, 'addTagWrap', removeTagFromAddForm);
+}
+event.target.value = '';
+}
+}
+
+function removeTagFromAddForm(tag) {
+addNodeTags = addNodeTags.filter(function(t) { return t !== tag; });
+renderTagChips(addNodeTags, 'addTagWrap', removeTagFromAddForm);
+}
+
+// Edit Node modal tag handlers
+function handleEditTagKeydown(event) {
+if (event.key === 'Enter') {
+event.preventDefault();
+var val = event.target.value.trim();
+if (!val) return;
+if (!editNodeTags.includes(val)) {
+editNodeTags.push(val);
+renderTagChips(editNodeTags, 'editTagWrap', removeTagFromEditForm);
+}
+event.target.value = '';
+}
+}
+
+function removeTagFromEditForm(tag) {
+editNodeTags = editNodeTags.filter(function(t) { return t !== tag; });
+renderTagChips(editNodeTags, 'editTagWrap', removeTagFromEditForm);
+}
+// ───────────────────────────────────────────────────────────────────────────
+
+// 🌐 Global variables for chains
+let currentNodeId = null;
+
+// tracks which node's ··· menu is open
+let activeMenuNodeId = null;
+let activeMenuIsEnabled = true; // whether that node is currently active
+
+// Open the floating action menu next to the ··· button
+function openNodeMenu(event, nodeId) {
+event.stopPropagation();
+activeMenuNodeId = nodeId;
+
+var btn = event.currentTarget;
+var rect = btn.getBoundingClientRect();
+var menu = document.getElementById('nodeMenu');
+
+// figure out if this node is currently enabled or disabled
+activeMenuIsEnabled = btn.getAttribute('data-active') === '1';
+
+// flip the toggle button label and colour depending on current state
+var toggleBtn = document.getElementById('nodeMenuToggle');
+if (activeMenuIsEnabled) {
+toggleBtn.textContent = '⊘ Disable';
+toggleBtn.className = 'node-menu-btn menu-disable';
+} else {
+toggleBtn.textContent = '✓ Enable';
+toggleBtn.className = 'node-menu-btn menu-enable';
+}
+
+// measure menu height off-screen, then flip above if not enough space below
+menu.style.visibility = 'hidden';
+menu.style.display = 'block';
+var menuHeight = menu.offsetHeight;
+menu.style.visibility = '';
+
+var fitsBelow = (window.innerHeight - rect.bottom) >= menuHeight + 6;
+menu.style.top = fitsBelow
+  ? (rect.bottom + 6) + 'px'
+  : (rect.top - menuHeight - 6) + 'px';
+menu.style.left = (rect.right - 160) + 'px';
+}
+
+// Close the menu
+function closeNodeMenu() {
+document.getElementById('nodeMenu').style.display = 'none';
+activeMenuNodeId = null;
+}
+
+// Menu button handlers — capture the id before closing so it isn't lost
+function handleMenuClone() {
+var id = activeMenuNodeId;
+closeNodeMenu();
+cloneNode(id);
+}
+
+function handleMenuEdit() {
+var id = activeMenuNodeId;
+closeNodeMenu();
+editNode(id);
+}
+
+function handleMenuDelete() {
+var id = activeMenuNodeId;
+closeNodeMenu();
+deleteNode(id);
+}
+
+function handleMenuToggleActive() {
+var id = activeMenuNodeId;
+var enable = !activeMenuIsEnabled; // flip the current state
+closeNodeMenu();
+toggleNodeActive(id, enable);
+}
+
+// Send the enable/disable request to the backend, then refresh the table
+async function toggleNodeActive(id, enable) {
+try {
+var res = await fetch('/nodes/' + id + '/active', {
+method: 'PATCH',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({ is_active: enable ? 1 : 0 })
+});
+if (res.ok) {
+await fetchStatus();
+} else {
+var err = await res.json();
+alert('❌ Failed to update node: ' + (err.error || 'Unknown error'));
+}
+} catch (e) {
+alert('❌ Error: ' + e.message);
+}
+}
+
+// Clone a node — pre-fill the Add Node form with the existing node's data
+async function cloneNode(id) {
+try {
+var res = await fetch('/nodes/' + id);
+if (!res.ok) { alert('❌ Could not load node data.'); return; }
+var node = await res.json();
+
+// Switch to the Add Node tab
+switchTab('addNode');
+
+// Pre-fill every field with the existing node's values
+document.getElementById('name').value = node.name;
+document.getElementById('local').value = node.local_url || '';
+document.getElementById('rpcMethod').value = node.custom_method || '';
+document.getElementById('params').value = node.custom_params || '[]';
+document.getElementById('headers').value = node.custom_headers || '{}';
+document.getElementById('responsePath').value = node.custom_response_path || '';
+document.getElementById('httpMethod').value = node.custom_http_method || 'POST';
+document.getElementById('checkInterval').value = node.check_interval || 60;
+
+// Copy tags to the add form
+addNodeTags = Array.isArray(node.tags) ? [...node.tags] : [];
+renderTagChips(addNodeTags, 'addTagWrap', removeTagFromAddForm);
+
+// Set the chain dropdown
+document.getElementById('chainSelect').value = node.chain_id || '';
+searchableSelects.chainSelect?.setValue(String(node.chain_id || ''));
+
+// Populate the remote URL dropdown and pre-select the saved URL
+var chain = availableChains.find(function(c) { return c.id === node.chain_id; });
+var rpcUrls = chain ? (chain.rpc_urls || []) : [];
+populateRemoteDropdown('remote', rpcUrls, node.remote_url || '', 'remoteCustom');
+
+} catch (err) {
+alert('❌ Failed to clone node: ' + err.message);
+}
+}
+
+// Close floating menus when clicking outside
+document.addEventListener('click', function(e) {
+var nodeMenu = document.getElementById('nodeMenu');
+if (nodeMenu && !nodeMenu.contains(e.target)) {
+closeNodeMenu();
+}
+var tagWrapper = document.getElementById('tagDropdownWrapper');
+if (tagWrapper && !tagWrapper.contains(e.target)) {
+closeTagDropdown();
+}
+});
+
+// Close node menu on scroll so it doesn't detach from its trigger button
+window.addEventListener('scroll', closeNodeMenu, true);
 function updateChainsLastSyncLabel(isoDateString = null) {
   const label = document.getElementById("chainsLastSync");
   if (!label) return;
@@ -178,6 +744,15 @@ async function fetchChains() {
       throw new Error(`HTTP ${res.status}: ${res.statusText}`);
     }
     availableChains = await res.json();
+
+  // Sort chains alphabetically by symbol (0-9 first, then A-Z)
+  availableChains.sort(function(a, b) {
+  var symbolA = a.symbol.toUpperCase();
+  var symbolB = b.symbol.toUpperCase();
+  if (symbolA < symbolB) return -1;
+  if (symbolA > symbolB) return 1;
+  return 0;
+  });
     populateChainDropdown();
     // Also keep edit modal dropdown in sync if present
     if (typeof populateEditChainDropdown === "function") {
@@ -199,10 +774,11 @@ function populateChainDropdown() {
   availableChains.forEach((chain) => {
     const option = document.createElement("option");
     option.value = chain.id;
-    option.textContent = `${chain.name} (${chain.symbol})`;
+    option.textContent = formatChainLabel(chain.name, chain.symbol);
     option.dataset.chain = JSON.stringify(chain);
     chainSelect.appendChild(option);
   });
+  searchableSelects.chainSelect?.refresh();
 }
 
 // 🔄 Handle chain selection
@@ -268,6 +844,7 @@ function populateRemoteDropdown(selectId, rpcUrls, selectedUrl = "", customInput
     select.innerHTML = '<option value="" disabled selected>Select a chain first...</option>';
     select.disabled = true;
     if (customInput) { customInput.style.display = "none"; customInput.value = ""; }
+      searchableSelects[selectId]?.refresh();
     return;
   }
 
@@ -295,6 +872,7 @@ function populateRemoteDropdown(selectId, rpcUrls, selectedUrl = "", customInput
     select.value = urls[0];
     if (customInput) customInput.style.display = "none";
   }
+  searchableSelects[selectId]?.refresh();
 }
 
 // 📝 Populate form with chain defaults
@@ -343,6 +921,7 @@ document.getElementById("nodeForm")?.addEventListener("submit", async (e) => {
       document.getElementById("responsePath").value.trim() || null,
     custom_http_method: document.getElementById("httpMethod").value || null,
     check_interval: parseInt(document.getElementById("checkInterval").value) || 60,
+    tags: addNodeTags,
   };
 
   const res = await apiFetch("/add", {
@@ -354,6 +933,8 @@ document.getElementById("nodeForm")?.addEventListener("submit", async (e) => {
   if (res.ok) {
     e.target.reset();
     currentNodeId = null;
+    addNodeTags = [];
+    renderTagChips(addNodeTags, 'addTagWrap', removeTagFromAddForm);
     clearChainDefaults();
     switchTab("dashboard");
     await fetchStatus(); // ✅ Live reload
@@ -398,6 +979,7 @@ async function editNode(id) {
     // Populate edit modal dropdown and fields
     populateEditChainDropdown();
     document.getElementById("editName").value = node.name || "";
+    searchableSelects.editChainSelect?.setValue(String(node.chain_id || ""));
     document.getElementById("editChainSelect").value = node.chain_id || "";
     onEditChainSelect();
     document.getElementById("editLocal").value = node.local_url || "";
@@ -419,6 +1001,10 @@ async function editNode(id) {
     document.getElementById("editCheckInterval").value =
       node.check_interval || 60;
 
+    // Populate tags
+    editNodeTags = Array.isArray(node.tags) ? [...node.tags] : [];
+    renderTagChips(editNodeTags, 'editTagWrap', removeTagFromEditForm);
+
     showEditNodeModal();
   } catch (error) {
     alert("Failed to load node data: " + error.message);
@@ -435,6 +1021,7 @@ function hideEditNodeModal() {
   const modal = document.getElementById("editNodeModal");
   if (modal) modal.style.display = "none";
   editingNodeId = null;
+  editNodeTags = [];
 }
 
 let currentHistoryNodeId = null;
@@ -611,10 +1198,11 @@ function populateEditChainDropdown() {
   availableChains.forEach((chain) => {
     const option = document.createElement("option");
     option.value = chain.id;
-    option.textContent = `${chain.name} (${chain.symbol})`;
+      option.textContent = formatChainLabel(chain.name, chain.symbol);
     option.dataset.chain = JSON.stringify(chain);
     select.appendChild(option);
   });
+  searchableSelects.editChainSelect?.refresh();
 }
 
 function populateEditRemoteDropdown(rpcUrls, selectedUrl = "") {
@@ -641,6 +1229,12 @@ function onEditChainSelect() {
     httpMethodEl.value = chain.http_method || "POST";
   populateEditRemoteDropdown(chain.rpc_urls || []);
 }
+
+  // 🔍 Show full error text in a modal
+  function showErrorDetail(cell) {
+    document.getElementById('errorDetailText').textContent = cell.dataset.error;
+    document.getElementById('errorDetailModal').style.display = 'flex';
+  }
 
 // ⬇️ Export table to CSV
 document.getElementById("exportBtn")?.addEventListener("click", () => {
@@ -1326,6 +1920,18 @@ function setAuthMode(mode) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Initialise searchable selects for all meaningful dropdowns
+  const ssMap = {
+    chainSelect: { placeholder: 'Search chains...' },
+    editChainSelect: { placeholder: 'Search chains...' },
+    remote: { placeholder: 'Search RPC URLs...' },
+    editRemote: { placeholder: 'Search RPC URLs...' },
+  };
+  Object.entries(ssMap).forEach(([id, cfg]) => {
+    const el = document.getElementById(id);
+    if (el) searchableSelects[id] = new SearchableSelect(el, cfg.placeholder);
+  });
+
   updateHistoryRangeUI();
   initAuthForms();
   const params = new URLSearchParams(window.location.search);
@@ -1371,6 +1977,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   updateChainsLastSyncLabel();
   setInterval(fetchStatus, 60 * 1000);
+  setInterval(updateRelativeTimes, 5 * 1000); // update "Xs ago" text every 5s
 
   // Attach submit handler for Edit Node modal after DOM is ready
   const editForm = document.getElementById("editNodeForm");
@@ -1396,6 +2003,7 @@ document.addEventListener("DOMContentLoaded", () => {
           document.getElementById("editHttpMethod").value || null,
         check_interval:
           parseInt(document.getElementById("editCheckInterval").value) || 60,
+          tags: editNodeTags,
       };
 
       const res = await apiFetch(`/edit/${editingNodeId}`, {

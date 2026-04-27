@@ -273,7 +273,7 @@ class DatabaseManager {
     } catch (e) {
       if (!e.message.includes('duplicate column name')) throw e;
     }
-
+    // Create indexes for better performance
     this.db.exec(`
       CREATE UNIQUE INDEX IF NOT EXISTS idx_nodes_tenant_name ON nodes(tenant_id, name);
       CREATE INDEX IF NOT EXISTS idx_nodes_chain_id ON nodes(chain_id);
@@ -347,7 +347,6 @@ class DatabaseManager {
       INSERT INTO supported_chains (name, symbol, rpc_method, default_params, response_path, http_method, block_time, description, chain_id, rpc_urls, explorer, is_testnet, icon, short_name)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    
     return stmt.run(
       sanitizedData.name,
       sanitizedData.symbol,
@@ -369,7 +368,6 @@ class DatabaseManager {
   getAllChains() {
     const stmt = this.db.prepare('SELECT * FROM supported_chains ORDER BY name');
     const chains = stmt.all();
-    
     // Parse JSON fields that are stored as strings
     return chains.map(chain => ({
       ...chain,
@@ -381,9 +379,7 @@ class DatabaseManager {
   getChainById(id) {
     const stmt = this.db.prepare('SELECT * FROM supported_chains WHERE id = ?');
     const chain = stmt.get(id);
-    
     if (!chain) return null;
-    
     // Parse JSON fields that are stored as strings
     return {
       ...chain,
@@ -400,7 +396,6 @@ class DatabaseManager {
           explorer = ?, is_testnet = ?, icon = ?, short_name = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `);
-    
     return stmt.run(
       chainData.name,
       chainData.symbol,
@@ -644,8 +639,8 @@ class DatabaseManager {
   addNode(nodeData, tenantId) {
     const stmt = this.db.prepare(`
       INSERT INTO nodes (tenant_id, name, chain_id, local_url, remote_url, custom_method, custom_params,
-                        custom_headers, custom_response_path, custom_http_method, check_interval)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        custom_headers, custom_response_path, custom_http_method, check_interval, tags)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     return stmt.run(
@@ -659,13 +654,14 @@ class DatabaseManager {
       nodeData.custom_headers || '{}',
       nodeData.custom_response_path || null,
       nodeData.custom_http_method || null,
-      nodeData.check_interval ? Number(nodeData.check_interval) : 60
+      nodeData.check_interval ? Number(nodeData.check_interval) : 60,
+      JSON.stringify(tags)
     );
   }
 
   getAllNodes(tenantId) {
     const stmt = this.db.prepare(`
-      SELECT n.*, c.name as chain_name, c.symbol as chain_symbol,
+      SELECT n.*, c.name as chain_name, c.symbol as chain_symbol, c.icon as chain_icon,
              c.rpc_method as default_rpc_method, c.default_params as default_params,
              c.response_path as default_response_path, c.http_method as default_http_method
       FROM nodes n
@@ -704,7 +700,7 @@ class DatabaseManager {
       UPDATE nodes
       SET name = ?, chain_id = ?, local_url = ?, remote_url = ?, custom_method = ?,
           custom_params = ?, custom_headers = ?, custom_response_path = ?,
-          custom_http_method = ?, check_interval = ?, updated_at = CURRENT_TIMESTAMP
+          custom_http_method = ?, check_interval = ?, tags = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ? AND tenant_id = ?
     `);
 
@@ -719,6 +715,7 @@ class DatabaseManager {
       nodeData.custom_response_path || null,
       nodeData.custom_http_method || null,
       nodeData.check_interval ? Number(nodeData.check_interval) : 60,
+      JSON.stringify(nodeData.tags),
       id,
       tenantId
     );
@@ -762,7 +759,7 @@ class DatabaseManager {
       )
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    
+
     return stmt.run(
       tenantId,
       nodeId,
@@ -823,9 +820,11 @@ class DatabaseManager {
       SELECT
         n.id,
         n.name,
+        n.tags,
         n.consecutive_error_count as errorCount,
         c.name as chain_name,
         c.symbol as chain_symbol,
+        c.icon as chain_icon,
         nsh.local_height as localHeight,
         nsh.remote_height as remoteHeight,
         nsh.delay,
@@ -850,6 +849,17 @@ class DatabaseManager {
     `);
     return stmt.all(tenantId);
   }
+
+  getAllTags() {
+    const rows = this.db.prepare("SELECT tags FROM nodes WHERE tags IS NOT NULL AND tags != '[]'").all();
+    const tagSet = new Set();
+    rows.forEach(row => {
+    try {
+    JSON.parse(row.tags || '[]').forEach(t => tagSet.add(t));
+    } catch {}
+    });
+    return Array.from(tagSet).sort();
+    }
 
   // Utility methods
   close() {

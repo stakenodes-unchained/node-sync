@@ -545,6 +545,19 @@ app.get("/status", requireAuth, requireMonitoringAccess, (req, res) => {
   }
 });
 
+// PATCH /nodes/:id/active — enable or disable a node
+app.patch("/nodes/:id/active", (req, res) => {
+  try {
+  const result = db.setNodeActive(req.params.id, req.body.is_active);
+  if (result.changes === 0) {
+    return res.status(404).json({ error: "Node not found." });
+  }
+    res.json({ success: true });
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to update node: " + error.message });
+  }
+});
+
 // POST /add
 app.post("/add", requireAuth, requireMonitoringAccess, (req, res) => {
   const node = req.body;
@@ -820,6 +833,16 @@ app.get("/nodes/:id/history", requireAuth, requireMonitoringAccess, (req, res) =
     res.status(500).json({ error: "Failed to fetch status history: " + error.message });
   }
 });
+
+  // GET /tags — return all unique tags across all nodes
+  app.get("/tags", (req, res) => {
+    try {
+    const tags = db.getAllTags();
+    res.json(tags);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch tags: " + error.message });
+    }
+  });
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
